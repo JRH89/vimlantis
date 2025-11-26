@@ -156,7 +156,7 @@ if [[ "$CREATE_COMMAND" =~ ^[Yy]$ ]]; then
 #!/bin/bash
 # Vimlantis global command
 cd "$SCRIPT_DIR"
-node server/index.js --port 3000 --cwd "\$(pwd)" "\$@"
+node server/index.js --port 3000 --cwd "\$(pwd)" --open "\$@"
 EOF
     
     chmod +x "$COMMAND_PATH"

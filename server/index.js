@@ -44,14 +44,14 @@ app.get('/api/file', (req, res) => {
     if (!filePath) {
       return res.status(400).json({ error: 'Path parameter required' });
     }
-    
+
     const fullPath = path.join(cwd, filePath);
-    
+
     // Security check: ensure the path is within cwd
     if (!fullPath.startsWith(cwd)) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const content = fs.readFileSync(fullPath, 'utf-8');
     res.json({ content, path: filePath });
   } catch (error) {
@@ -63,11 +63,11 @@ app.get('/api/file', (req, res) => {
 // API endpoint to open file in Neovim
 app.post('/api/open', (req, res) => {
   const { path: filePath } = req.body;
-  
+
   if (!filePath) {
     return res.status(400).json({ error: 'Path required' });
   }
-  
+
   // Broadcast to all WebSocket clients to open the file
   wss.clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
@@ -77,7 +77,7 @@ app.post('/api/open', (req, res) => {
       }));
     }
   });
-  
+
   res.json({ success: true });
 });
 
@@ -85,7 +85,7 @@ app.post('/api/open', (req, res) => {
 function buildFileTree(dirPath, relativePath = '') {
   const items = [];
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-  
+
   // Ignore patterns
   const ignorePatterns = [
     /^\.git$/,
@@ -101,16 +101,16 @@ function buildFileTree(dirPath, relativePath = '') {
     /\.pyc$/,
     /^\.next$/,
   ];
-  
+
   for (const entry of entries) {
     // Skip ignored files/folders
     if (ignorePatterns.some(pattern => pattern.test(entry.name))) {
       continue;
     }
-    
+
     const fullPath = path.join(dirPath, entry.name);
     const itemRelativePath = path.join(relativePath, entry.name);
-    
+
     if (entry.isDirectory()) {
       const children = buildFileTree(fullPath, itemRelativePath);
       items.push({
@@ -127,7 +127,7 @@ function buildFileTree(dirPath, relativePath = '') {
       });
     }
   }
-  
+
   return items;
 }
 
@@ -135,6 +135,31 @@ function buildFileTree(dirPath, relativePath = '') {
 const server = app.listen(port, () => {
   console.log(`Vimlantis server running at http://localhost:${port}`);
   console.log(`Serving files from: ${cwd}`);
+
+  // Open browser if requested
+  if (args.includes('--open')) {
+    const url = `http://localhost:${port}`;
+    const { exec } = require('child_process');
+    let command;
+
+    switch (process.platform) {
+      case 'darwin':
+        command = `open "${url}"`;
+        break;
+      case 'win32':
+        command = `start "${url}"`;
+        break;
+      default:
+        command = `xdg-open "${url}"`;
+    }
+
+    console.log(`Opening browser: ${url}`);
+    exec(command, (error) => {
+      if (error) {
+        console.error('Failed to open browser:', error);
+      }
+    });
+  }
 });
 
 // Setup WebSocket server
@@ -142,12 +167,12 @@ const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (ws) => {
   console.log('WebSocket client connected');
-  
+
   ws.on('message', (message) => {
     try {
       const data = JSON.parse(message);
       console.log('Received message:', data);
-      
+
       // Handle different message types
       if (data.type === 'open_file') {
         // This would be handled by Neovim RPC in a full implementation
@@ -157,7 +182,7 @@ wss.on('connection', (ws) => {
       console.error('Error processing WebSocket message:', error);
     }
   });
-  
+
   ws.on('close', () => {
     console.log('WebSocket client disconnected');
   });

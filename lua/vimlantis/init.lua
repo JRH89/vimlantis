@@ -64,6 +64,10 @@ function M.start_server()
     vim.fn.shellescape(vim.fn.getcwd())
   )
   
+  if M.config.auto_open_browser then
+    cmd = cmd .. ' --open'
+  end
+  
   M.server_job_id = vim.fn.jobstart(cmd, {
     on_stdout = function(_, data)
       if data then
@@ -93,13 +97,6 @@ function M.start_server()
   if M.server_job_id > 0 then
     M.server_running = true
     vim.notify('Vimlantis server starting on port ' .. M.config.port, vim.log.levels.INFO)
-    
-    -- Wait a bit for server to start, then open browser
-    if M.config.auto_open_browser then
-      vim.defer_fn(function()
-        M.open_browser()
-      end, 1500)
-    end
   else
     vim.notify('Failed to start Vimlantis server', vim.log.levels.ERROR)
   end
@@ -119,7 +116,7 @@ function M.stop_server()
   end
 end
 
--- Open browser
+-- Open browser (Legacy/Manual)
 function M.open_browser()
   local url = string.format('http://localhost:%d', M.config.port)
   local open_cmd
