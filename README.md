@@ -151,21 +151,22 @@ vim.keymap.set('n', '<leader>vl', '<cmd>Vimlantis<cr>', { desc = 'Open Vimlantis
 
 ## 🏃 Usage
 
-### From Neovim
+### 1. From Neovim (Integrated)
 
-1. Open Neovim in any project directory
-2. Run `:Vimlantis` (or press `<leader>vl` if you set up the keybinding)
-3. Your browser opens with a 3D ocean world showing your files!
-4. Navigate with **WASD** or **arrow keys**
-5. **Click** on lighthouses (folders) or buoys (files) to explore
+1. Open Neovim in any project
+2. Run `:Vimlantis`
+3. The browser opens automatically!
 
-### Standalone (Without Neovim)
+### 2. From Terminal (Universal / Any IDE)
+
+You can use Vimlantis with **VS Code, Emacs, or any other editor** by running it from your terminal:
 
 ```bash
-cd vimlantis
-npm run dev
-# Opens http://localhost:3000
+cd /path/to/your/project
+vimlantis
 ```
+
+This works for ANY project on your system! 🌍
 
 ### Keybindings
 
@@ -223,9 +224,21 @@ Communication between components happens via HTTP/WebSocket for real-time update
 
 ## 📦 Requirements
 
-- Neovim >= 0.8.0
-- Node.js >= 16.0.0 (for the web server)
-- Modern web browser (Chrome, Firefox, Edge, Safari)
+- **Neovim** >= 0.8.0
+- **Node.js** >= 16.0.0
+- **Modern Browser** (Chrome, Firefox, Edge, Safari)
+- **OS:** Linux, macOS, or Windows (WSL recommended)
+
+## 🪟 Windows Support
+
+Vimlantis works on Windows!
+
+- **Via WSL (Recommended):** Follow the standard Linux installation instructions.
+- **Via PowerShell/CMD:**
+  1. Clone the repo
+  2. Run `npm install`
+  3. Manually add to your Neovim config (see Manual Installation)
+  4. Use `npm run dev` for standalone mode
 
 ## 🎗️ Support
 
