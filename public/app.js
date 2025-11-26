@@ -371,61 +371,85 @@ class Vimlantis {
     createLighthouse() {
         const group = new THREE.Group();
 
-        // Base
-        const baseGeometry = new THREE.CylinderGeometry(2, 2.5, 2, 8);
-        const baseMaterial = new THREE.MeshStandardMaterial({
-            color: 0x808080,
-            metalness: 0.3,
-            roughness: 0.7,
+        // Sandy island base
+        const islandGeometry = new THREE.CylinderGeometry(3, 3.5, 0.8, 8);
+        const islandMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf4e4c1, // Sandy beach color
+            metalness: 0.1,
+            roughness: 0.9,
         });
-        const base = new THREE.Mesh(baseGeometry, baseMaterial);
-        base.position.y = 1;
-        base.castShadow = true;
-        group.add(base);
+        const island = new THREE.Mesh(islandGeometry, islandMaterial);
+        island.position.y = 0.4;
+        island.castShadow = true;
+        island.receiveShadow = true;
+        group.add(island);
 
-        // Tower
-        const towerGeometry = new THREE.CylinderGeometry(1.5, 2, 12, 8);
-        const towerMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.2,
+        // Palm tree trunk
+        const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 6, 8);
+        const trunkMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b6f47, // Brown bark
+            metalness: 0.1,
+            roughness: 0.9,
+        });
+        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+        trunk.position.y = 3.8;
+        trunk.castShadow = true;
+        group.add(trunk);
+
+        // Palm fronds (leaves) - create 6 fronds in a circle
+        const frondMaterial = new THREE.MeshStandardMaterial({
+            color: 0x2d5016, // Dark green
+            metalness: 0.1,
             roughness: 0.8,
+            side: THREE.DoubleSide,
         });
-        const tower = new THREE.Mesh(towerGeometry, towerMaterial);
-        tower.position.y = 8;
-        tower.castShadow = true;
-        group.add(tower);
 
-        // Red stripe
-        const stripeGeometry = new THREE.CylinderGeometry(1.6, 2.1, 3, 8);
-        const stripeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff0000,
-            metalness: 0.2,
-            roughness: 0.8,
-        });
-        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
-        stripe.position.y = 6;
-        group.add(stripe);
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
 
-        // Light housing
-        const lightGeometry = new THREE.CylinderGeometry(1.8, 1.5, 2, 8);
-        const lightMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffff00,
-            emissive: 0xffff00,
-            emissiveIntensity: 1,
-            metalness: 0.8,
-            roughness: 0.2,
-        });
-        const light = new THREE.Mesh(lightGeometry, lightMaterial);
-        light.position.y = 15;
-        light.castShadow = true;
-        group.add(light);
+            // Frond geometry - elongated and curved
+            const frondGeometry = new THREE.ConeGeometry(0.8, 3, 4);
+            const frond = new THREE.Mesh(frondGeometry, frondMaterial);
 
-        // Point light
-        const pointLight = new THREE.PointLight(0xffff00, 1, 50);
-        pointLight.position.y = 15;
-        group.add(pointLight);
+            // Position at top of trunk
+            frond.position.y = 7.5;
+            frond.position.x = Math.cos(angle) * 0.5;
+            frond.position.z = Math.sin(angle) * 0.5;
 
-        group.scale.set(1, 1, 1);
+            // Rotate to fan out
+            frond.rotation.z = Math.cos(angle) * 0.6;
+            frond.rotation.x = Math.sin(angle) * 0.6;
+            frond.rotation.y = angle;
+
+            frond.castShadow = true;
+            group.add(frond);
+        }
+
+        // Add a second smaller palm tree for variety
+        const trunk2 = trunk.clone();
+        trunk2.scale.set(0.7, 0.7, 0.7);
+        trunk2.position.set(1.5, 2.6, 1);
+        group.add(trunk2);
+
+        // Fronds for second tree
+        for (let i = 0; i < 5; i++) {
+            const angle = (i / 5) * Math.PI * 2;
+            const frondGeometry = new THREE.ConeGeometry(0.6, 2.2, 4);
+            const frond = new THREE.Mesh(frondGeometry, frondMaterial);
+
+            frond.position.y = 5;
+            frond.position.x = 1.5 + Math.cos(angle) * 0.3;
+            frond.position.z = 1 + Math.sin(angle) * 0.3;
+
+            frond.rotation.z = Math.cos(angle) * 0.6;
+            frond.rotation.x = Math.sin(angle) * 0.6;
+            frond.rotation.y = angle;
+
+            frond.castShadow = true;
+            group.add(frond);
+        }
+
+        group.scale.set(1.5, 1.5, 1.5); // Make islands bigger
         return group;
     }
 
@@ -829,22 +853,12 @@ class Vimlantis {
             const object = intersects[0].object.parent || intersects[0].object;
 
             if (object !== this.hoveredObject) {
-                // Reset previous
-                if (this.hoveredObject) {
-                    this.hoveredObject.scale.set(1, 1, 1);
-                }
-
-                // Set new
+                // Set new hovered object (no scale change)
                 this.hoveredObject = object;
-                this.hoveredObject.scale.set(1.1, 1.1, 1.1);
-
-                // Info panel update removed - using permanent labels now
             }
         } else {
             if (this.hoveredObject) {
-                this.hoveredObject.scale.set(1, 1, 1);
                 this.hoveredObject = null;
-                // document.getElementById('hover-info').classList.add('info-hidden');
             }
         }
     }
