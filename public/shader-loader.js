@@ -31,14 +31,14 @@ class ShaderLoader {
             fragmentShader,
             uniforms: {
                 uTime: { value: 0.0 },
-                uWaveStrength: { value: 1.5 },
-                uWaveFrequency: { value: 0.02 },
-                uWaterColorDeep: { value: new THREE.Color(0x0a3d62) },
-                uWaterColorShallow: { value: new THREE.Color(0x1e7a9e) },
+                uWaveStrength: { value: 0.8 },
+                uWaveFrequency: { value: 0.15 },
+                uWaterColorDeep: { value: new THREE.Color(0x1a5f8a) },
+                uWaterColorShallow: { value: new THREE.Color(0x4db8e8) },
                 uFoamColor: { value: new THREE.Color(0xffffff) },
                 uSunDirection: { value: new THREE.Vector3(0.5, 1.0, 0.5).normalize() },
-                uFoamThreshold: { value: 0.8 },
-                uShininess: { value: 128.0 }
+                uFoamThreshold: { value: 0.65 },
+                uShininess: { value: 25.0 }
             }
         };
     }

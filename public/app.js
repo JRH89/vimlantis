@@ -228,7 +228,7 @@ class Vimlantis {
             boatGroup.add(hull);
         }
 
-        boatGroup.position.y = 2;
+        boatGroup.position.y = 0.5;
         this.boat = boatGroup;
         this.scene.add(boatGroup);
     }
