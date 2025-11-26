@@ -94,6 +94,8 @@ Then open your browser to **http://localhost:3000** and sail around! 🌊
 
 Add this to your Neovim config (e.g., `~/.config/nvim/lua/plugins/vimlantis.lua`):
 
+> Tip: `./install.sh` can now drop this file into `~/.config/nvim/lua/plugins/vimlantis.lua` for you during the Automatic Install flow—just accept the Lazy.nvim prompt when it appears.
+
 ```lua
 return {
   {

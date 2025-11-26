@@ -19,6 +19,58 @@ NC='\033[0m' # No Color
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+create_lazy_spec_file() {
+    local lazy_plugins_dir="$NVIM_CONFIG_DIR/lua/plugins"
+    local lazy_file="$lazy_plugins_dir/vimlantis.lua"
+
+    echo ""
+    echo -e "${BLUE}Configuring Lazy.nvim integration...${NC}"
+
+    read -p "Create or update Lazy.nvim spec at $lazy_file? [Y/n]: " create_lazy_spec
+    if [[ "$create_lazy_spec" =~ ^[Nn]$ ]]; then
+        echo -e "${YELLOW}Skipping Lazy.nvim spec creation${NC}"
+        return
+    fi
+
+    if [ ! -d "$lazy_plugins_dir" ]; then
+        echo "Creating $lazy_plugins_dir..."
+        mkdir -p "$lazy_plugins_dir"
+    fi
+
+    if [ -f "$lazy_file" ]; then
+        local backup_file="${lazy_file}.bak.$(date +%s)"
+        cp "$lazy_file" "$backup_file"
+        echo -e "${YELLOW}Existing vimlantis.lua backed up to $backup_file${NC}"
+    fi
+
+    local local_plugin_path="${SCRIPT_DIR/#$HOME/~}"
+    local escaped_path
+    escaped_path=$(printf '%s' "$local_plugin_path" | sed 's/\\/\\\\/g; s/"/\\"/g')
+
+    cat > "$lazy_file" << EOF
+return {
+  {
+    -- Use the local path instead of cloning from GitHub
+    dir = vim.fn.expand("${escaped_path}"),
+    lazy = false, -- load immediately
+    config = function()
+      require("vimlantis").setup({
+        port = 3000,
+        auto_open_browser = true,
+      })
+    end,
+    keys = {
+      { "<leader>vl", "<cmd>Vimlantis<cr>", desc = "Open Vimlantis" },
+      { "<leader>vc", "<cmd>VimlantisClose<cr>", desc = "Close Vimlantis" },
+    },
+  },
+}
+EOF
+
+    echo -e "${GREEN}✓ Lazy.nvim spec created at $lazy_file${NC}"
+    echo "Run ':Lazy sync' in Neovim to ensure Vimlantis is loaded."
+}
+
 # Check prerequisites
 echo -e "${BLUE}Checking prerequisites...${NC}"
 
@@ -100,6 +152,11 @@ case $INSTALL_CHOICE in
         echo -e "${YELLOW}  auto_open_browser = true,${NC}"
         echo -e "${YELLOW}}${NC}"
         echo ""
+
+        # Offer Lazy.nvim integration
+        if [ -d "$NVIM_CONFIG_DIR" ]; then
+            create_lazy_spec_file
+        fi
         ;;
     2)
         echo ""
