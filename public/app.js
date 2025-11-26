@@ -205,7 +205,7 @@ class Vimlantis {
             });
 
             // Adjust scale and position as needed
-            shipModel.scale.set(1, 1, 1);
+            shipModel.scale.set(1.25, 1.25, 1.25);
             shipModel.position.set(0, 0, 0);
 
             boatGroup.add(shipModel);
@@ -353,7 +353,7 @@ class Vimlantis {
             labelDiv.className = 'object-label';
             labelDiv.textContent = item.name;
             const label = new THREE.CSS2DObject(labelDiv);
-            label.position.set(0, item.type === 'directory' ? 18 : 4, 0);
+            label.position.set(0, item.type === 'directory' ? 0 : 2, 0);
             mesh.add(label);
 
             this.objects.push({ mesh, item });
@@ -403,7 +403,7 @@ class Vimlantis {
         const lightMaterial = new THREE.MeshStandardMaterial({
             color: 0xffff00,
             emissive: 0xffff00,
-            emissiveIntensity: 0.5,
+            emissiveIntensity: 1,
             metalness: 0.8,
             roughness: 0.2,
         });
@@ -417,6 +417,7 @@ class Vimlantis {
         pointLight.position.y = 15;
         group.add(pointLight);
 
+        group.scale.set(1, 1, 1);
         return group;
     }
 
