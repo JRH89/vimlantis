@@ -244,14 +244,57 @@ class Vimlantis {
         this.objects.forEach(obj => this.scene.remove(obj.mesh));
         this.objects = [];
 
-        // Create objects for current items
-        const radius = 30;
-        const angleStep = (Math.PI * 2) / Math.max(this.currentItems.length, 1);
+        // Natural scattered placement - like discovering islands
+        const minDistance = 15; // Minimum distance between objects
+        const maxDistance = 80; // Maximum distance from boat
+        const positions = [];
 
+        // Helper function to check if position is valid
+        const isValidPosition = (x, z) => {
+            // Check distance from boat (origin)
+            const distFromBoat = Math.sqrt(x * x + z * z);
+            if (distFromBoat < 10 || distFromBoat > maxDistance) return false;
+
+            // Check distance from other objects
+            for (const pos of positions) {
+                const dx = x - pos.x;
+                const dz = z - pos.z;
+                const dist = Math.sqrt(dx * dx + dz * dz);
+                if (dist < minDistance) return false;
+            }
+            return true;
+        };
+
+        // Generate scattered positions for each item
         this.currentItems.forEach((item, index) => {
-            const angle = angleStep * index;
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
+            let x, z;
+            let attempts = 0;
+            const maxAttempts = 100;
+
+            // Try to find a valid random position
+            do {
+                // Use a mix of random and semi-structured placement
+                const angle = (Math.random() * Math.PI * 2);
+                const distance = 20 + Math.random() * 60;
+
+                // Add some clustering variation
+                const clusterOffset = Math.random() * 10 - 5;
+
+                x = Math.cos(angle) * distance + clusterOffset;
+                z = Math.sin(angle) * distance + clusterOffset;
+
+                attempts++;
+            } while (!isValidPosition(x, z) && attempts < maxAttempts);
+
+            // Fallback to a guaranteed position if we couldn't find one
+            if (attempts >= maxAttempts) {
+                const fallbackAngle = (index / this.currentItems.length) * Math.PI * 2;
+                const fallbackDistance = 30 + (index % 3) * 15;
+                x = Math.cos(fallbackAngle) * fallbackDistance;
+                z = Math.sin(fallbackAngle) * fallbackDistance;
+            }
+
+            positions.push({ x, z });
 
             let mesh;
 
@@ -259,10 +302,14 @@ class Vimlantis {
                 // Lighthouse for directories
                 mesh = this.createLighthouse();
                 mesh.position.set(x, 0, z);
+                // Add slight random rotation for natural look
+                mesh.rotation.y = Math.random() * Math.PI * 2;
             } else {
                 // Buoy for files
                 mesh = this.createBuoy();
                 mesh.position.set(x, 0, z);
+                // Add slight random rotation
+                mesh.rotation.y = Math.random() * Math.PI * 2;
             }
 
             mesh.userData = item;

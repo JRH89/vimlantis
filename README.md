@@ -135,7 +135,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Credits
 
 Vimlantis is inspired by [Gitlantis](https://github.com/liltrendi/gitlantis) by [Brian Njogu](https://brayo.co). 
-Thank you Brian for the amazing idea! 🌊
+Thank you Brian and Ayla Croft for the amazing idea! 🌊
 
 ## 🗺️ Roadmap
 
