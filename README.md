@@ -4,6 +4,28 @@
 
 Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrendi/gitlantis) that transforms your codebase into an immersive 3D ocean environment. Navigate your files and folders by sailing a boat through a virtual sea!
 
+## ⚡ TL;DR - Quick Start
+
+```bash
+# Clone and install
+git clone https://github.com/yourusername/vimlantis.git
+cd vimlantis
+npm install
+
+# Test it (opens browser)
+npm run dev
+
+# Or use in Neovim
+nvim
+:lua vim.opt.runtimepath:append('~/vimlantis')
+:lua require('vimlantis').setup()
+:Vimlantis
+```
+
+**That's it!** Browser opens, you sail a boat through your code. 🌊⛵
+
+---
+
 ## 🌊 Features
 
 - 🚤 **Real-Time 3D Exploration** - Control a boat that sails across your project's sea
@@ -16,45 +38,112 @@ Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrend
 
 ## 🚀 Installation
 
-### Using [lazy.nvim](https://github.com/folke/lazy.nvim)
+### Prerequisites
+
+You need these installed first:
+- **Node.js** (v16 or higher) - [Download here](https://nodejs.org)
+- **Neovim** (v0.8 or higher) - [Install guide](https://github.com/neovim/neovim/wiki/Installing-Neovim)
+
+### Step 1: Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/vimlantis.git
+cd vimlantis
+```
+
+### Step 2: Install Dependencies
+
+```bash
+npm install
+```
+
+That's it for the basic setup! Now choose how you want to use it:
+
+---
+
+### Option A: Test Without Neovim (Standalone)
+
+Just want to see it in action first?
+
+```bash
+npm run dev
+```
+
+Then open your browser to **http://localhost:3000** and sail around! 🌊
+
+---
+
+### Option B: Install as Neovim Plugin
+
+#### Using [lazy.nvim](https://github.com/folke/lazy.nvim) (Recommended)
+
+Add this to your Neovim config (e.g., `~/.config/nvim/lua/plugins/vimlantis.lua`):
 
 ```lua
-{
-  'vimlantis',
-  dir = '/path/to/vimlantis',
-  config = function()
-    require('vimlantis').setup({
-      -- Optional configuration
-      port = 3000,
-      auto_open_browser = true,
-      minimap_size = 'medium',
-      show_breadcrumbs = true,
-    })
-  end,
-  keys = {
-    { '<leader>vl', '<cmd>Vimlantis<cr>', desc = 'Open Vimlantis' },
+return {
+  {
+    'yourusername/vimlantis',
+    -- Or use local path during development:
+    -- dir = '~/path/to/vimlantis',
+    config = function()
+      require('vimlantis').setup({
+        port = 3000,
+        auto_open_browser = true,
+      })
+    end,
+    keys = {
+      { '<leader>vl', '<cmd>Vimlantis<cr>', desc = 'Open Vimlantis' },
+      { '<leader>vc', '<cmd>VimlantisClose<cr>', desc = 'Close Vimlantis' },
+    },
   },
 }
 ```
 
-### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
+#### Using [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
 use {
-  'vimlantis',
+  'yourusername/vimlantis',
   config = function()
     require('vimlantis').setup()
   end
 }
 ```
 
+#### Manual Setup (No Plugin Manager)
+
+Add to your `init.lua`:
+
+```lua
+-- Add to runtimepath
+vim.opt.runtimepath:append('~/path/to/vimlantis')
+
+-- Setup
+require('vimlantis').setup()
+
+-- Keybindings
+vim.keymap.set('n', '<leader>vl', '<cmd>Vimlantis<cr>', { desc = 'Open Vimlantis' })
+```
+
+---
+
 ## 🏃 Usage
 
-1. Open Neovim in your project directory
-2. Run `:Vimlantis` or press `<leader>vl`
-3. A browser window will open with your 3D ocean world
-4. Use WASD or arrow keys to navigate your boat
-5. Click on buoys (files) or lighthouses (folders) to interact
+### From Neovim
+
+1. Open Neovim in any project directory
+2. Run `:Vimlantis` (or press `<leader>vl` if you set up the keybinding)
+3. Your browser opens with a 3D ocean world showing your files!
+4. Navigate with **WASD** or **arrow keys**
+5. **Click** on lighthouses (folders) or buoys (files) to explore
+
+### Standalone (Without Neovim)
+
+```bash
+cd vimlantis
+npm run dev
+# Opens http://localhost:3000
+```
 
 ### Keybindings
 
@@ -139,13 +228,27 @@ Thank you Brian and Ayla Croft for the amazing idea! 🌊
 
 ## 🗺️ Roadmap
 
-- [ ] Core 3D ocean rendering
-- [ ] File/folder navigation
-- [ ] Neovim integration
-- [ ] Minimap, compass, breadcrumbs
-- [ ] Configuration system
+### ✅ Completed
+- [x] Core 3D ocean rendering with realistic shaders
+- [x] Natural scattered file/folder layout
+- [x] Boat navigation with WASD controls
+- [x] Neovim integration
+- [x] Minimap, compass, breadcrumbs UI
+- [x] Configuration system
+- [x] Multiple ocean themes
+- [x] Plugin manager support (lazy.nvim, packer)
+
+### 🚧 In Progress
+- [ ] Custom pirate ship model (Blender import)
+- [ ] File opening in Neovim (RPC integration)
+- [ ] Minimap object rendering
+
+### 🔮 Future
 - [ ] Git integration (show git status on buoys/lighthouses)
 - [ ] Search functionality
-- [ ] Multiple ocean themes
-- [ ] Performance optimizations
-- [ ] Plugin manager integration
+- [ ] File preview on hover
+- [ ] Performance optimizations for large codebases
+- [ ] Telescope.nvim integration
+- [ ] Multiple boat skins
+- [ ] Weather effects (rain, storms)
+- [ ] Day/night cycle
