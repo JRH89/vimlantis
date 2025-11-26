@@ -2,7 +2,7 @@
 
 ## Overview
 
-Vimlantis now supports **intelligent file opening** that integrates with your IDE! When you click on a buoy (file) or lighthouse (folder) in the 3D ocean world, it opens directly in your editor.
+Vimlantis now supports **intelligent file opening** that integrates with your IDE! When you click on a barrel (file) or lighthouse (folder) in the 3D ocean world, it opens directly in your editor.
 
 ## How It Works
 
