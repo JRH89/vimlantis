@@ -11,13 +11,6 @@ Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrend
 git clone https://github.com/jrh89/vimlantis.git
 cd vimlantis
 ./install.sh
-
-# Test it (opens browser)
-npm run dev
-
-# Or use in Neovim
-nvim
-:Vimlantis
 ```
 
 **That's it!** Browser opens, you sail a boat through your code. 🌊⛵
