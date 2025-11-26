@@ -38,7 +38,7 @@ You need these installed first:
 ### Automated Installation (Recommended)
 
 ```bash
-git clone https://github.com/yourusername/vimlantis.git
+git clone https://github.com/jrh89/vimlantis.git
 cd vimlantis
 ./install.sh
 ```
@@ -51,7 +51,7 @@ The installation script will:
 
 **After installation, just open Neovim and run:**
 ```vim
-vimlantis
+:Vimlantis
 ```
 (No configuration required!)
 
@@ -62,7 +62,7 @@ If you prefer to install manually:
 **Step 1: Clone the Repository**
 
 ```bash
-git clone https://github.com/yourusername/vimlantis.git
+git clone https://github.com/jrh89/vimlantis.git
 cd vimlantis
 ```
 
@@ -97,7 +97,7 @@ Add this to your Neovim config (e.g., `~/.config/nvim/lua/plugins/vimlantis.lua`
 ```lua
 return {
   {
-    'yourusername/vimlantis',
+    'jrh89/vimlantis',
     -- Or use local path during development:
     -- dir = '~/path/to/vimlantis',
     config = function()
@@ -118,7 +118,7 @@ return {
 
 ```lua
 use {
-  'yourusername/vimlantis',
+  'jrh89/vimlantis',
   config = function()
     require('vimlantis').setup()
   end
