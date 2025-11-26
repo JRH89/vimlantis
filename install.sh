@@ -155,8 +155,13 @@ if [[ "$CREATE_COMMAND" =~ ^[Yy]$ ]]; then
     cat > "$COMMAND_PATH" << EOF
 #!/bin/bash
 # Vimlantis global command
-cd "$SCRIPT_DIR"
-node server/index.js --port 3000 --cwd "\$(pwd)" --open "\$@"
+# Save the current directory (where user runs the command)
+CURRENT_DIR="\$(pwd)"
+# Change to vimlantis directory to run the server
+VIMLANTIS_DIR="$SCRIPT_DIR"
+cd "\$VIMLANTIS_DIR"
+# Run server with the user's current directory
+node server/index.js --port 3000 --cwd "\$CURRENT_DIR" --open "\$@"
 EOF
     
     chmod +x "$COMMAND_PATH"
