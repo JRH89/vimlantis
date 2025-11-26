@@ -70,7 +70,8 @@ class Vimlantis {
     setupScene() {
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x1a3a52, 0.008);
+        // Fog disabled - objects stay visible at all distances
+        // this.scene.fog = new THREE.FogExp2(0x1a3a52, 0.002);
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(
@@ -402,6 +403,7 @@ class Vimlantis {
         return group;
     }
 
+
     async loadBarrelModel() {
         if (this.barrelModel) {
             return this.barrelModel; // Return cached model
@@ -429,24 +431,24 @@ class Vimlantis {
 
     createBuoy() {
         const group = new THREE.Group();
+        group.frustumCulled = false;
 
-        // If barrel model is loaded, clone it
         if (this.barrelModel) {
             const barrel = this.barrelModel.clone();
+            barrel.frustumCulled = false;
 
-            // Enable shadows
             barrel.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
+                    child.frustumCulled = false;
+                    child.renderOrder = 1;
                 }
             });
 
-            // Make barrels 2x bigger
             barrel.scale.set(2, 2, 2);
             group.add(barrel);
         } else {
-            // Fallback to simple geometry if model not loaded
             const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
             const bodyMaterial = new THREE.MeshStandardMaterial({
                 color: 0xff6b35,
@@ -456,6 +458,7 @@ class Vimlantis {
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
             body.position.y = 1.5;
             body.castShadow = true;
+            body.frustumCulled = false;
             group.add(body);
         }
 
