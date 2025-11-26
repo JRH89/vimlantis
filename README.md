@@ -15,6 +15,10 @@ cd vimlantis
 
 **That's it!** Type 'vimlantis' in the terminal from any project and sail the open seas.
 
+OR
+
+Use ':Vimlantis' in neovim / lazyvim 
+
 ---
 
 ## 🌊 Features
