@@ -642,12 +642,12 @@ class Vimlantis {
 
         // Forward/Backward
         if (this.keys['w'] || this.keys['arrowup']) {
-            this.boat.position.x += Math.sin(this.boat.rotation.y) * speed;
-            this.boat.position.z += Math.cos(this.boat.rotation.y) * speed;
-        }
-        if (this.keys['s'] || this.keys['arrowdown']) {
             this.boat.position.x -= Math.sin(this.boat.rotation.y) * speed;
             this.boat.position.z -= Math.cos(this.boat.rotation.y) * speed;
+        }
+        if (this.keys['s'] || this.keys['arrowdown']) {
+            this.boat.position.x += Math.sin(this.boat.rotation.y) * speed;
+            this.boat.position.z += Math.cos(this.boat.rotation.y) * speed;
         }
 
         // Rotation
