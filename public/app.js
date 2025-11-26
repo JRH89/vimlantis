@@ -91,6 +91,14 @@ class Vimlantis {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // Label Renderer
+        this.labelRenderer = new THREE.CSS2DRenderer();
+        this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
+        this.labelRenderer.domElement.style.position = 'absolute';
+        this.labelRenderer.domElement.style.top = '0px';
+        this.labelRenderer.domElement.style.pointerEvents = 'none';
+        document.body.appendChild(this.labelRenderer.domElement);
     }
 
     setupLights() {
@@ -339,6 +347,15 @@ class Vimlantis {
 
             mesh.userData = item;
             this.scene.add(mesh);
+
+            // Create permanent label
+            const labelDiv = document.createElement('div');
+            labelDiv.className = 'object-label';
+            labelDiv.textContent = item.name;
+            const label = new THREE.CSS2DObject(labelDiv);
+            label.position.set(0, item.type === 'directory' ? 18 : 4, 0);
+            mesh.add(label);
+
             this.objects.push({ mesh, item });
         });
     }
@@ -473,6 +490,10 @@ class Vimlantis {
             if (e.key === 'Escape') {
                 this.navigateBack();
             }
+
+            if (e.key === ' ') {
+                this.handleSpaceKey();
+            }
         });
 
         window.addEventListener('keyup', (e) => {
@@ -495,7 +516,9 @@ class Vimlantis {
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
+            this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
     }
 
@@ -806,19 +829,13 @@ class Vimlantis {
                 this.hoveredObject = object;
                 this.hoveredObject.scale.set(1.1, 1.1, 1.1);
 
-                // Update info panel
-                const item = object.userData;
-                const infoPanel = document.getElementById('hover-info');
-                infoPanel.classList.remove('info-hidden');
-                infoPanel.querySelector('.info-icon').textContent = item.type === 'directory' ? '🗼' : '📄';
-                infoPanel.querySelector('.info-name').textContent = item.name;
-                infoPanel.querySelector('.info-type').textContent = item.type;
+                // Info panel update removed - using permanent labels now
             }
         } else {
             if (this.hoveredObject) {
                 this.hoveredObject.scale.set(1, 1, 1);
                 this.hoveredObject = null;
-                document.getElementById('hover-info').classList.add('info-hidden');
+                // document.getElementById('hover-info').classList.add('info-hidden');
             }
         }
     }
@@ -841,7 +858,42 @@ class Vimlantis {
             }
         });
 
+        this.checkVicinity();
         this.renderer.render(this.scene, this.camera);
+        this.labelRenderer.render(this.scene, this.camera);
+    }
+
+    checkVicinity() {
+        if (!this.boat) return;
+
+        let closestDist = Infinity;
+        let closestObj = null;
+        const threshold = 15; // Vicinity threshold
+
+        this.objects.forEach(obj => {
+            const dist = this.boat.position.distanceTo(obj.mesh.position);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestObj = obj;
+            }
+        });
+
+        const prompt = document.getElementById('vicinity-prompt');
+
+        if (closestDist < threshold && closestObj) {
+            this.vicinityObject = closestObj;
+            prompt.classList.remove('hidden');
+            prompt.querySelector('.prompt-text').textContent = `to open ${closestObj.item.name}`;
+        } else {
+            this.vicinityObject = null;
+            prompt.classList.add('hidden');
+        }
+    }
+
+    handleSpaceKey() {
+        if (this.vicinityObject) {
+            this.handleObjectClick(this.vicinityObject.mesh);
+        }
     }
 }
 

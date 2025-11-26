@@ -341,46 +341,7 @@ kbd {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Info Panel */
-#info-panel {
-  position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 250px;
-  transition: opacity var(--transition-fast);
-  z-index: 10;
-}
 
-#hover-info {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-#hover-info.info-hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.info-icon {
-  font-size: 2.5rem;
-  line-height: 1;
-}
-
-.info-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
-}
-
-.info-type {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
 
 /* Icon Buttons */
 .icon-btn {
@@ -626,4 +587,60 @@ kbd {
 /* Utility Classes */
 .hidden {
   display: none !important;
+}
+
+/* Vicinity Prompt */
+#vicinity-prompt {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 20, 35, 0.9);
+  backdrop-filter: blur(8px);
+  padding: 1rem 2rem;
+  border-radius: 1rem;
+  border: 1px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  animation: fadeInUp 0.3s ease;
+  pointer-events: none;
+}
+
+#vicinity-prompt.hidden {
+  display: none !important;
+}
+
+.prompt-key {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.prompt-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Object Labels */
+.object-label {
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px black;
+  white-space: nowrap;
+  margin-top: -20px;
+  /* Offset to sit above object */
 }
