@@ -2,7 +2,7 @@
 
 > Transform your Neovim project into an explorable 3D ocean world
 
-Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrendi/gitlantis) that transforms your codebase into an immersive 3D ocean environment. Navigate your files and folders by sailing a boat through a virtual sea!
+Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrendi/gitlantis) and Ayla Croft (@aylacroft) that transforms your codebase into an immersive 3D ocean environment. Navigate your files and folders by sailing a boat through a virtual sea!
 
 ## ⚡ TL;DR - Quick Start
 
