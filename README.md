@@ -58,7 +58,7 @@ The installation script will:
 
 **After installation, just open Neovim and run:**
 ```vim
-:Vimlantis
+vimlantis
 ```
 (No configuration required!)
 
