@@ -44,10 +44,12 @@ class Vimlantis {
         await this.createBoat();
         await this.loadBarrelModel(); // Load barrel model
         this.createSkybox();
-        this.populateScene();
         this.setupEventListeners();
         this.setupUI();
         this.animate();
+
+        // Initial population
+        this.populateScene();
 
         // Hide loading screen
         setTimeout(() => {
@@ -274,7 +276,13 @@ class Vimlantis {
 
     populateScene() {
         // Clear existing objects
-        this.objects.forEach(obj => this.scene.remove(obj.mesh));
+        this.objects.forEach(obj => {
+            this.scene.remove(obj.mesh);
+            // Remove label if it exists (it's a child of mesh, but good to be clean)
+            obj.mesh.children.forEach(child => {
+                if (child.isCSS2DObject) obj.mesh.remove(child);
+            });
+        });
         this.objects = [];
 
         // Natural scattered placement - like discovering islands
