@@ -39,7 +39,7 @@ class Vimlantis {
         await this.loadFileTree();
         this.setupScene();
         this.setupLights();
-        this.createOcean();
+        await this.createOcean();
         this.createBoat();
         this.createSkybox();
         this.populateScene();
@@ -112,32 +112,59 @@ class Vimlantis {
         this.scene.add(hemiLight);
     }
 
-    createOcean() {
-        const oceanGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
-        const oceanMaterial = new THREE.MeshStandardMaterial({
-            color: 0x1a5f7a,
-            metalness: 0.3,
-            roughness: 0.7,
-            transparent: true,
-            opacity: 0.9,
-        });
+    async createOcean() {
+        const oceanGeometry = new THREE.PlaneGeometry(1000, 1000, 200, 200);
+
+        // Try to load custom shaders
+        const shaderData = await ShaderLoader.loadOceanShaders();
+
+        let oceanMaterial;
+
+        if (shaderData) {
+            // Use custom shader material for realistic water
+            oceanMaterial = new THREE.ShaderMaterial({
+                vertexShader: shaderData.vertexShader,
+                fragmentShader: shaderData.fragmentShader,
+                uniforms: shaderData.uniforms,
+                transparent: true,
+                side: THREE.DoubleSide,
+            });
+
+            this.oceanUniforms = shaderData.uniforms;
+            this.useShaders = true;
+            console.log('✨ Ocean shaders loaded successfully!');
+        } else {
+            // Fallback to standard material
+            oceanMaterial = new THREE.MeshStandardMaterial({
+                color: 0x1a5f7a,
+                metalness: 0.3,
+                roughness: 0.7,
+                transparent: true,
+                opacity: 0.9,
+            });
+
+            this.useShaders = false;
+            console.log('⚠️ Using fallback ocean material');
+        }
 
         this.ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
         this.ocean.rotation.x = -Math.PI / 2;
         this.ocean.receiveShadow = true;
         this.scene.add(this.ocean);
 
-        // Animate ocean waves
-        const positions = oceanGeometry.attributes.position;
-        this.oceanWaves = [];
+        // For fallback animation only
+        if (!this.useShaders) {
+            const positions = oceanGeometry.attributes.position;
+            this.oceanWaves = [];
 
-        for (let i = 0; i < positions.count; i++) {
-            this.oceanWaves.push({
-                x: positions.getX(i),
-                y: positions.getY(i),
-                z: positions.getZ(i),
-                offset: Math.random() * Math.PI * 2,
-            });
+            for (let i = 0; i < positions.count; i++) {
+                this.oceanWaves.push({
+                    x: positions.getX(i),
+                    y: positions.getY(i),
+                    z: positions.getZ(i),
+                    offset: Math.random() * Math.PI * 2,
+                });
+            }
         }
     }
 
@@ -647,22 +674,28 @@ class Vimlantis {
     }
 
     updateOceanWaves(time) {
-        const positions = this.ocean.geometry.attributes.position;
+        if (this.useShaders && this.oceanUniforms) {
+            // Update shader uniforms for realistic water
+            this.oceanUniforms.uTime.value = time;
+        } else if (this.oceanWaves) {
+            // Fallback: manual vertex animation
+            const positions = this.ocean.geometry.attributes.position;
 
-        for (let i = 0; i < this.oceanWaves.length; i++) {
-            const wave = this.oceanWaves[i];
-            const x = wave.x;
-            const y = wave.y;
-            const offset = wave.offset;
+            for (let i = 0; i < this.oceanWaves.length; i++) {
+                const wave = this.oceanWaves[i];
+                const x = wave.x;
+                const y = wave.y;
+                const offset = wave.offset;
 
-            const waveHeight = Math.sin(x * 0.05 + time + offset) * 0.3 +
-                Math.sin(y * 0.05 + time * 0.7 + offset) * 0.2;
+                const waveHeight = Math.sin(x * 0.05 + time + offset) * 0.3 +
+                    Math.sin(y * 0.05 + time * 0.7 + offset) * 0.2;
 
-            positions.setZ(i, waveHeight);
+                positions.setZ(i, waveHeight);
+            }
+
+            positions.needsUpdate = true;
+            this.ocean.geometry.computeVertexNormals();
         }
-
-        positions.needsUpdate = true;
-        this.ocean.geometry.computeVertexNormals();
     }
 
     updateHoverEffect() {
