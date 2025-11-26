@@ -149,6 +149,7 @@ vim.keymap.set('n', '<leader>vl', '<cmd>Vimlantis<cr>', { desc = 'Open Vimlantis
 1. Open Neovim in any project
 2. Run `:Vimlantis`
 3. The browser opens automatically!
+4. **Click any buoy (file) or lighthouse (folder)** - it opens directly in your Neovim instance! 🎯
 
 ### 2. From Terminal (Universal / Any IDE)
 
@@ -161,6 +162,27 @@ vimlantis
 
 This works for ANY project on your system! 🌍
 
+**Customize your editor:**
+```bash
+# Use VS Code
+VIMLANTIS_EDITOR=code vimlantis
+
+# Use Vim
+VIMLANTIS_EDITOR=vim vimlantis
+
+# Use Sublime Text
+VIMLANTIS_EDITOR=subl vimlantis
+```
+
+### How File Opening Works
+
+- **From Neovim**: Files open in the **same Neovim instance** via RPC
+- **From Terminal**: Files open in your preferred editor (auto-detected or configured)
+- **Folders**: 
+  - In Neovim: Opens `:Explore` in that directory
+  - In VS Code: Opens the folder in VS Code
+  - Other editors: Opens in file explorer
+
 ### Keybindings
 
 **In the 3D World:**
@@ -169,7 +191,7 @@ This works for ANY project on your system! 🌍
 - `A/←` - Turn left
 - `D/→` - Turn right
 - `ESC` - Go back to parent directory
-- `Click` - Open file/folder
+- `Click` - Open file/folder **in your IDE**
 
 **In Neovim:**
 - `:Vimlantis` - Open Vimlantis

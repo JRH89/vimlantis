@@ -28,9 +28,9 @@ class Vimlantis {
         this.raycaster = new THREE.Raycaster();
         this.hoveredObject = null;
 
-        // Camera control
-        this.cameraOffset = new THREE.Vector3(0, 15, 25);
-        this.cameraLookOffset = new THREE.Vector3(0, 5, 0);
+        // Camera control - close third-person view
+        this.cameraOffset = new THREE.Vector3(0, 4, 8);
+        this.cameraLookOffset = new THREE.Vector3(0, 0, 0);
 
         this.init();
     }
@@ -40,7 +40,7 @@ class Vimlantis {
         this.setupScene();
         this.setupLights();
         await this.createOcean();
-        this.createBoat();
+        await this.createBoat();
         this.createSkybox();
         this.populateScene();
         this.setupEventListeners();
@@ -168,57 +168,52 @@ class Vimlantis {
         }
     }
 
-    createBoat() {
+    async createBoat() {
         const boatGroup = new THREE.Group();
 
-        // Hull
-        const hullGeometry = new THREE.BoxGeometry(3, 1.5, 6);
-        const hullMaterial = new THREE.MeshStandardMaterial({
-            color: 0x8b4513,
-            metalness: 0.2,
-            roughness: 0.8,
-        });
-        const hull = new THREE.Mesh(hullGeometry, hullMaterial);
-        hull.castShadow = true;
-        boatGroup.add(hull);
+        try {
+            // Load the GLB model
+            const loader = new THREE.GLTFLoader();
+            const gltf = await new Promise((resolve, reject) => {
+                loader.load(
+                    './ship_finished.glb',
+                    (gltf) => resolve(gltf),
+                    undefined,
+                    (error) => reject(error)
+                );
+            });
 
-        // Deck
-        const deckGeometry = new THREE.BoxGeometry(2.8, 0.3, 5.5);
-        const deckMaterial = new THREE.MeshStandardMaterial({
-            color: 0xd2691e,
-            metalness: 0.1,
-            roughness: 0.9,
-        });
-        const deck = new THREE.Mesh(deckGeometry, deckMaterial);
-        deck.position.y = 1;
-        deck.castShadow = true;
-        boatGroup.add(deck);
+            const shipModel = gltf.scene;
 
-        // Mast
-        const mastGeometry = new THREE.CylinderGeometry(0.15, 0.15, 8);
-        const mastMaterial = new THREE.MeshStandardMaterial({
-            color: 0x8b7355,
-            metalness: 0.1,
-            roughness: 0.9,
-        });
-        const mast = new THREE.Mesh(mastGeometry, mastMaterial);
-        mast.position.y = 5;
-        mast.castShadow = true;
-        boatGroup.add(mast);
+            // Enable shadows for all meshes in the model
+            shipModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
 
-        // Sail
-        const sailGeometry = new THREE.PlaneGeometry(4, 6);
-        const sailMaterial = new THREE.MeshStandardMaterial({
-            color: 0xf0f0f0,
-            side: THREE.DoubleSide,
-            metalness: 0,
-            roughness: 0.8,
-        });
-        const sail = new THREE.Mesh(sailGeometry, sailMaterial);
-        sail.position.set(1.5, 5, 0);
-        sail.rotation.y = Math.PI / 2;
-        sail.castShadow = true;
-        boatGroup.add(sail);
+            // Adjust scale and position as needed
+            shipModel.scale.set(1, 1, 1);
+            shipModel.position.set(0, 0, 0);
+
+            boatGroup.add(shipModel);
+            console.log('✨ Ship model loaded successfully!');
+        } catch (error) {
+            console.error('Failed to load ship model:', error);
+            console.log('⚠️ Using fallback boat geometry');
+
+            // Fallback to simple boat if model fails to load
+            const hullGeometry = new THREE.BoxGeometry(3, 1.5, 6);
+            const hullMaterial = new THREE.MeshStandardMaterial({
+                color: 0x8b4513,
+                metalness: 0.2,
+                roughness: 0.8,
+            });
+            const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+            hull.castShadow = true;
+            boatGroup.add(hull);
+        }
 
         boatGroup.position.y = 2;
         this.boat = boatGroup;
@@ -618,16 +613,22 @@ class Vimlantis {
             const response = await fetch(`/api/open`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ path: file.path }),
+                body: JSON.stringify({
+                    path: file.path,
+                    type: file.type
+                }),
             });
 
             if (response.ok) {
+                const data = await response.json();
                 console.log('Opened file:', file.path);
+                console.log('Using editor:', data.editor);
                 // Show notification
                 this.showNotification(`Opened: ${file.name}`);
             }
         } catch (error) {
             console.error('Failed to open file:', error);
+            this.showNotification(`Failed to open: ${file.name}`);
         }
     }
 

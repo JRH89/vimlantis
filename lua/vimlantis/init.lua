@@ -57,12 +57,20 @@ function M.start_server()
     return
   end
   
+  -- Get Neovim server name for RPC
+  local nvim_server = vim.v.servername
+  
   -- Start the server
   local cmd = string.format('node %s --port %d --cwd %s', 
     vim.fn.shellescape(server_path),
     M.config.port,
     vim.fn.shellescape(vim.fn.getcwd())
   )
+  
+  -- Add Neovim server address if available
+  if nvim_server and nvim_server ~= '' then
+    cmd = cmd .. ' --nvim-server ' .. vim.fn.shellescape(nvim_server)
+  end
   
   if M.config.auto_open_browser then
     cmd = cmd .. ' --open'
