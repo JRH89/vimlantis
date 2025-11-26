@@ -2,7 +2,7 @@
 
 Transform any project into an explorable 3D ocean directly from Neovim.
 
-![Vimlantis](/og.png)
+![Vimlantis](https://raw.githubusercontent.com/JRH89/vimlantis/refs/heads/master/public/og.png)
 
 ## Install (Neovim or LazyVim)
 
