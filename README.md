@@ -13,7 +13,7 @@ cd vimlantis
 ./install.sh
 ```
 
-**That's it!** Browser opens, you sail a boat through your code. 🌊⛵
+**That's it!** Type 'vimlantis' in the terminal from any project and sail the open seas.
 
 ---
 
