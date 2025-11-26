@@ -5,19 +5,19 @@
   --ocean-blue-primary: hsl(200, 80%, 45%);
   --ocean-blue-secondary: hsl(200, 70%, 35%);
   --ocean-blue-dark: hsl(200, 60%, 20%);
-  
+
   --ocean-teal-primary: hsl(180, 70%, 40%);
   --ocean-teal-secondary: hsl(180, 60%, 30%);
   --ocean-teal-dark: hsl(180, 50%, 15%);
-  
+
   --ocean-purple-primary: hsl(270, 60%, 50%);
   --ocean-purple-secondary: hsl(270, 50%, 40%);
   --ocean-purple-dark: hsl(270, 40%, 20%);
-  
+
   --ocean-sunset-primary: hsl(20, 80%, 50%);
   --ocean-sunset-secondary: hsl(340, 70%, 45%);
   --ocean-sunset-dark: hsl(260, 50%, 25%);
-  
+
   /* UI Colors */
   --bg-overlay: rgba(10, 15, 30, 0.85);
   --bg-panel: rgba(15, 20, 35, 0.92);
@@ -29,20 +29,20 @@
   --accent-hover: hsl(200, 90%, 65%);
   --border: rgba(255, 255, 255, 0.1);
   --shadow: rgba(0, 0, 0, 0.5);
-  
+
   /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
-  
+
   /* Border Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
-  
+
   /* Transitions */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
@@ -240,6 +240,8 @@ body {
 
 .compass-needle {
   position: absolute;
+  top: 0;
+  left: calc(50% - 2px);
   width: 4px;
   height: 50%;
   background: linear-gradient(to bottom, hsl(0, 80%, 60%), hsl(0, 80%, 50%));
@@ -256,10 +258,21 @@ body {
   color: var(--text-secondary);
 }
 
-.compass-n { top: 8px; }
-.compass-e { right: 8px; }
-.compass-s { bottom: 8px; }
-.compass-w { left: 8px; }
+.compass-n {
+  top: 8px;
+}
+
+.compass-e {
+  right: 8px;
+}
+
+.compass-s {
+  bottom: 8px;
+}
+
+.compass-w {
+  left: 8px;
+}
 
 /* Minimap */
 #minimap {
@@ -540,6 +553,7 @@ kbd {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -553,18 +567,24 @@ kbd {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.6;
   }
 }
 
 @keyframes shimmer {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -575,6 +595,7 @@ kbd {
     opacity: 0;
     transform: scale(0.9) translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -586,16 +607,16 @@ kbd {
   #breadcrumbs {
     max-width: calc(100% - 2 * var(--spacing-lg));
   }
-  
+
   #controls-help {
     font-size: 0.8125rem;
   }
-  
+
   #minimap {
     width: 150px;
     height: 150px;
   }
-  
+
   #compass {
     width: 100px;
     height: 100px;

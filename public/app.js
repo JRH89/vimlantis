@@ -522,6 +522,14 @@ class Vimlantis {
             document.getElementById('controls-help').classList.toggle('hidden');
         });
 
+        // Initialize Minimap
+        const minimapCanvas = document.getElementById('minimap-canvas');
+        if (minimapCanvas) {
+            minimapCanvas.width = minimapCanvas.offsetWidth;
+            minimapCanvas.height = minimapCanvas.offsetHeight;
+            this.minimapCtx = minimapCanvas.getContext('2d');
+        }
+
         this.updateBreadcrumbs();
     }
 
@@ -673,6 +681,60 @@ class Vimlantis {
         needle.style.transform = `rotate(${rotation}deg)`;
     }
 
+    updateMinimap() {
+        if (!this.settings.showMinimap || !this.minimapCtx || !this.boat) return;
+
+        const ctx = this.minimapCtx;
+        const width = ctx.canvas.width;
+        const height = ctx.canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const scale = 1.5; // Map scale (pixels per unit)
+
+        // Clear
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw objects relative to boat
+        this.objects.forEach(obj => {
+            // Calculate relative position rotated by boat rotation
+            // Actually, usually minimaps rotate the world around the player, keeping player facing up
+            // OR keep world static and rotate player arrow.
+            // Let's keep world static relative to boat position (overhead view), but rotate the map so boat is always "up"?
+            // No, usually minimaps have North Up or Player Up.
+            // Let's do Player Up (boat fixed pointing up, world rotates)
+
+            const relX = obj.mesh.position.x - this.boat.position.x;
+            const relZ = obj.mesh.position.z - this.boat.position.z;
+
+            // Rotate coordinates to match boat rotation (so boat is always facing up)
+            const angle = this.boat.rotation.y;
+            const rotX = relX * Math.cos(angle) - relZ * Math.sin(angle);
+            const rotZ = relX * Math.sin(angle) + relZ * Math.cos(angle);
+
+            const drawX = centerX - rotX * scale; // Invert X because of screen coords? No, let's test.
+            const drawY = centerY - rotZ * scale; // Z maps to Y
+
+            // Only draw if within bounds (circular clip would be nice but rect is fine)
+            if (drawX > 0 && drawX < width && drawY > 0 && drawY < height) {
+                ctx.fillStyle = obj.item.type === 'directory' ? '#ffff00' : '#ff6b35';
+                ctx.beginPath();
+                ctx.arc(drawX, drawY, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        // Draw boat (center, fixed pointing up)
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY - 6);
+        ctx.lineTo(centerX + 5, centerY + 6);
+        ctx.lineTo(centerX - 5, centerY + 6);
+        ctx.closePath();
+        ctx.fill();
+    }
+
     updateOceanWaves(time) {
         if (this.useShaders && this.oceanUniforms) {
             // Update shader uniforms for realistic water
@@ -744,6 +806,7 @@ class Vimlantis {
         this.updateBoatMovement();
         this.updateOceanWaves(time);
         this.updateHoverEffect();
+        this.updateMinimap();
 
         // Animate buoys bobbing
         this.objects.forEach(obj => {
