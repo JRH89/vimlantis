@@ -12,6 +12,7 @@ class Vimlantis {
         this.fileTree = null;
         this.currentPath = [];
         this.currentItems = [];
+        this.barrelModel = null; // Cache for barrel GLB model
 
         // Settings
         this.settings = {
@@ -41,6 +42,7 @@ class Vimlantis {
         this.setupLights();
         await this.createOcean();
         await this.createBoat();
+        await this.loadBarrelModel(); // Load barrel model
         this.createSkybox();
         this.populateScene();
         this.setupEventListeners();
@@ -400,43 +402,62 @@ class Vimlantis {
         return group;
     }
 
+    async loadBarrelModel() {
+        if (this.barrelModel) {
+            return this.barrelModel; // Return cached model
+        }
+
+        try {
+            const loader = new THREE.GLTFLoader();
+            const gltf = await new Promise((resolve, reject) => {
+                loader.load(
+                    './barrels.glb',
+                    (gltf) => resolve(gltf),
+                    undefined,
+                    (error) => reject(error)
+                );
+            });
+
+            this.barrelModel = gltf.scene;
+            console.log('✨ Barrel model loaded successfully!');
+            return this.barrelModel;
+        } catch (error) {
+            console.error('Failed to load barrel model:', error);
+            return null;
+        }
+    }
+
     createBuoy() {
         const group = new THREE.Group();
 
-        // Buoy body
-        const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
-        const bodyMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff6b35,
-            metalness: 0.4,
-            roughness: 0.6,
-        });
-        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-        body.position.y = 1.5;
-        body.castShadow = true;
-        group.add(body);
+        // If barrel model is loaded, clone it
+        if (this.barrelModel) {
+            const barrel = this.barrelModel.clone();
 
-        // White stripe
-        const stripeGeometry = new THREE.CylinderGeometry(1.05, 1.05, 0.5, 16);
-        const stripeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            metalness: 0.4,
-            roughness: 0.6,
-        });
-        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
-        stripe.position.y = 1.5;
-        group.add(stripe);
+            // Enable shadows
+            barrel.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
 
-        // Top pole
-        const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2);
-        const poleMaterial = new THREE.MeshStandardMaterial({
-            color: 0x333333,
-            metalness: 0.8,
-            roughness: 0.2,
-        });
-        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
-        pole.position.y = 3;
-        pole.castShadow = true;
-        group.add(pole);
+            // Make barrels 2x bigger
+            barrel.scale.set(2, 2, 2);
+            group.add(barrel);
+        } else {
+            // Fallback to simple geometry if model not loaded
+            const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
+            const bodyMaterial = new THREE.MeshStandardMaterial({
+                color: 0xff6b35,
+                metalness: 0.4,
+                roughness: 0.6,
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 1.5;
+            body.castShadow = true;
+            group.add(body);
+        }
 
         return group;
     }
