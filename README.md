@@ -8,7 +8,7 @@ Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrend
 
 ```bash
 # Clone and install
-git clone https://github.com/yourusername/vimlantis.git
+git clone https://github.com/jrh89/vimlantis.git
 cd vimlantis
 ./install.sh
 
