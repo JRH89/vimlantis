@@ -10,15 +10,13 @@ Vimlantis is a Neovim plugin inspired by [Gitlantis](https://github.com/liltrend
 # Clone and install
 git clone https://github.com/yourusername/vimlantis.git
 cd vimlantis
-npm install
+./install.sh
 
 # Test it (opens browser)
 npm run dev
 
 # Or use in Neovim
 nvim
-:lua vim.opt.runtimepath:append('~/vimlantis')
-:lua require('vimlantis').setup()
 :Vimlantis
 ```
 
@@ -44,14 +42,38 @@ You need these installed first:
 - **Node.js** (v16 or higher) - [Download here](https://nodejs.org)
 - **Neovim** (v0.8 or higher) - [Install guide](https://github.com/neovim/neovim/wiki/Installing-Neovim)
 
-### Step 1: Clone the Repository
+### Automated Installation (Recommended)
+
+```bash
+git clone https://github.com/yourusername/vimlantis.git
+cd vimlantis
+./install.sh
+```
+
+The installation script will:
+- ✅ Check prerequisites (Node.js, Neovim)
+- ✅ Install npm dependencies
+- ✅ Install the plugin to Neovim (auto-loads!)
+- ✅ Optionally create a global `vimlantis` command
+
+**After installation, just open Neovim and run:**
+```vim
+:Vimlantis
+```
+(No configuration required!)
+
+### Manual Installation
+
+If you prefer to install manually:
+
+**Step 1: Clone the Repository**
 
 ```bash
 git clone https://github.com/yourusername/vimlantis.git
 cd vimlantis
 ```
 
-### Step 2: Install Dependencies
+**Step 2: Install Dependencies**
 
 ```bash
 npm install

@@ -2,23 +2,27 @@
 
 ## Installation (2 minutes)
 
-1. **Install dependencies:**
+1. **Run the installation script:**
    ```bash
    cd vimlantis
-   npm install
+   ./install.sh
+   ```
+   
+   The script will install everything automatically.
+   
+   **That's it!** No config needed.
+
+2. **Use it in Neovim:**
+   Open any project and type:
+   ```vim
+   :Vimlantis
    ```
 
-2. **Test standalone (without Neovim):**
-   ```bash
-   npm run dev
-   # Open http://localhost:3000 in browser
-   ```
-
-3. **Add to Neovim (lazy.nvim):**
+3. **Or add to Neovim manually (if you skipped the installer):**
    ```lua
    {
      'vimlantis',
-     dir = 'c:/Users/Jared/Desktop/vimlantis',
+     dir = '/path/to/vimlantis',
      config = function()
        require('vimlantis').setup()
      end,
