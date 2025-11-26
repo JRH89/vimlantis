@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🚢 Vimlantis - Navigate Your Code Ocean</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <h1 class="loading-title">🚢 Vimlantis</h1>
+      <div class="loading-spinner"></div>
+      <p class="loading-text">Charting the seas of your codebase...</p>
+    </div>
+  </div>
+
+  <!-- Main Canvas -->
+  <canvas id="ocean-canvas"></canvas>
+
+  <!-- UI Overlay -->
+  <div id="ui-overlay">
+    <!-- Breadcrumbs -->
+    <div id="breadcrumbs" class="ui-panel">
+      <div class="breadcrumb-item active">
+        <span class="breadcrumb-icon">📁</span>
+        <span class="breadcrumb-text">root</span>
+      </div>
+    </div>
+
+    <!-- Compass -->
+    <div id="compass" class="ui-panel">
+      <div class="compass-ring">
+        <div class="compass-needle"></div>
+        <div class="compass-direction compass-n">N</div>
+        <div class="compass-direction compass-e">E</div>
+        <div class="compass-direction compass-s">S</div>
+        <div class="compass-direction compass-w">W</div>
+      </div>
+    </div>
+
+    <!-- Minimap -->
+    <div id="minimap" class="ui-panel">
+      <canvas id="minimap-canvas"></canvas>
+      <div class="minimap-label">Map</div>
+    </div>
+
+    <!-- Controls Help -->
+    <div id="controls-help" class="ui-panel">
+      <h3>⚓ Controls</h3>
+      <div class="control-item">
+        <kbd>W</kbd> <kbd>↑</kbd> <span>Forward</span>
+      </div>
+      <div class="control-item">
+        <kbd>S</kbd> <kbd>↓</kbd> <span>Backward</span>
+      </div>
+      <div class="control-item">
+        <kbd>A</kbd> <kbd>←</kbd> <span>Turn Left</span>
+      </div>
+      <div class="control-item">
+        <kbd>D</kbd> <kbd>→</kbd> <span>Turn Right</span>
+      </div>
+      <div class="control-item">
+        <kbd>ESC</kbd> <span>Go Back</span>
+      </div>
+      <div class="control-item">
+        <kbd>Click</kbd> <span>Open File/Folder</span>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div id="info-panel" class="ui-panel">
+      <div id="hover-info" class="info-hidden">
+        <div class="info-icon">📄</div>
+        <div class="info-text">
+          <div class="info-name"></div>
+          <div class="info-type"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Button -->
+    <button id="settings-btn" class="icon-btn" title="Settings">
+      ⚙️
+    </button>
+
+    <!-- Help Toggle -->
+    <button id="help-toggle" class="icon-btn" title="Toggle Help">
+      ❓
+    </button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>⚙️ Settings</h2>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="setting-breadcrumbs" checked>
+            Show Breadcrumbs
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="setting-compass" checked>
+            Show Compass
+          </label>
+        </div>
+        <div class="setting-group">
+          <label>
+            <input type="checkbox" id="setting-minimap" checked>
+            Show Minimap
+          </label>
+        </div>
+        <div class="setting-group">
+          <label for="setting-ocean-theme">Ocean Theme:</label>
+          <select id="setting-ocean-theme">
+            <option value="blue">Blue Ocean</option>
+            <option value="teal">Teal Waters</option>
+            <option value="purple">Purple Depths</option>
+            <option value="sunset">Sunset Sea</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="setting-boat-speed">Boat Speed:</label>
+          <input type="range" id="setting-boat-speed" min="0.5" max="2" step="0.1" value="1">
+          <span id="speed-value">1.0x</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- Main Application -->
+  <script src="app.js"></script>
+</body>
+</html>

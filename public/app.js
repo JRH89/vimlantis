@@ -1,0 +1,683 @@
+// Vimlantis - 3D Ocean Code Explorer
+// Main Application
+
+class Vimlantis {
+    constructor() {
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.boat = null;
+        this.ocean = null;
+        this.objects = [];
+        this.fileTree = null;
+        this.currentPath = [];
+        this.currentItems = [];
+
+        // Settings
+        this.settings = {
+            showBreadcrumbs: true,
+            showCompass: true,
+            showMinimap: true,
+            oceanTheme: 'blue',
+            boatSpeed: 1.0,
+        };
+
+        // Controls
+        this.keys = {};
+        this.mouse = { x: 0, y: 0 };
+        this.raycaster = new THREE.Raycaster();
+        this.hoveredObject = null;
+
+        // Camera control
+        this.cameraOffset = new THREE.Vector3(0, 15, 25);
+        this.cameraLookOffset = new THREE.Vector3(0, 5, 0);
+
+        this.init();
+    }
+
+    async init() {
+        await this.loadFileTree();
+        this.setupScene();
+        this.setupLights();
+        this.createOcean();
+        this.createBoat();
+        this.createSkybox();
+        this.populateScene();
+        this.setupEventListeners();
+        this.setupUI();
+        this.animate();
+
+        // Hide loading screen
+        setTimeout(() => {
+            document.getElementById('loading-screen').classList.add('hidden');
+        }, 1000);
+    }
+
+    async loadFileTree() {
+        try {
+            const response = await fetch('/api/filetree');
+            this.fileTree = await response.json();
+            this.currentItems = this.fileTree;
+        } catch (error) {
+            console.error('Failed to load file tree:', error);
+            this.fileTree = [];
+            this.currentItems = [];
+        }
+    }
+
+    setupScene() {
+        // Scene
+        this.scene = new THREE.Scene();
+        this.scene.fog = new THREE.FogExp2(0x1a3a52, 0.008);
+
+        // Camera
+        this.camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        this.camera.position.set(0, 15, 25);
+
+        // Renderer
+        this.renderer = new THREE.WebGLRenderer({
+            canvas: document.getElementById('ocean-canvas'),
+            antialias: true,
+        });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+
+    setupLights() {
+        // Ambient light
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        this.scene.add(ambientLight);
+
+        // Directional light (sun)
+        const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        sunLight.position.set(50, 100, 50);
+        sunLight.castShadow = true;
+        sunLight.shadow.camera.left = -100;
+        sunLight.shadow.camera.right = 100;
+        sunLight.shadow.camera.top = 100;
+        sunLight.shadow.camera.bottom = -100;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        this.scene.add(sunLight);
+
+        // Hemisphere light
+        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x1a3a52, 0.5);
+        this.scene.add(hemiLight);
+    }
+
+    createOcean() {
+        const oceanGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+        const oceanMaterial = new THREE.MeshStandardMaterial({
+            color: 0x1a5f7a,
+            metalness: 0.3,
+            roughness: 0.7,
+            transparent: true,
+            opacity: 0.9,
+        });
+
+        this.ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+        this.ocean.rotation.x = -Math.PI / 2;
+        this.ocean.receiveShadow = true;
+        this.scene.add(this.ocean);
+
+        // Animate ocean waves
+        const positions = oceanGeometry.attributes.position;
+        this.oceanWaves = [];
+
+        for (let i = 0; i < positions.count; i++) {
+            this.oceanWaves.push({
+                x: positions.getX(i),
+                y: positions.getY(i),
+                z: positions.getZ(i),
+                offset: Math.random() * Math.PI * 2,
+            });
+        }
+    }
+
+    createBoat() {
+        const boatGroup = new THREE.Group();
+
+        // Hull
+        const hullGeometry = new THREE.BoxGeometry(3, 1.5, 6);
+        const hullMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b4513,
+            metalness: 0.2,
+            roughness: 0.8,
+        });
+        const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+        hull.castShadow = true;
+        boatGroup.add(hull);
+
+        // Deck
+        const deckGeometry = new THREE.BoxGeometry(2.8, 0.3, 5.5);
+        const deckMaterial = new THREE.MeshStandardMaterial({
+            color: 0xd2691e,
+            metalness: 0.1,
+            roughness: 0.9,
+        });
+        const deck = new THREE.Mesh(deckGeometry, deckMaterial);
+        deck.position.y = 1;
+        deck.castShadow = true;
+        boatGroup.add(deck);
+
+        // Mast
+        const mastGeometry = new THREE.CylinderGeometry(0.15, 0.15, 8);
+        const mastMaterial = new THREE.MeshStandardMaterial({
+            color: 0x8b7355,
+            metalness: 0.1,
+            roughness: 0.9,
+        });
+        const mast = new THREE.Mesh(mastGeometry, mastMaterial);
+        mast.position.y = 5;
+        mast.castShadow = true;
+        boatGroup.add(mast);
+
+        // Sail
+        const sailGeometry = new THREE.PlaneGeometry(4, 6);
+        const sailMaterial = new THREE.MeshStandardMaterial({
+            color: 0xf0f0f0,
+            side: THREE.DoubleSide,
+            metalness: 0,
+            roughness: 0.8,
+        });
+        const sail = new THREE.Mesh(sailGeometry, sailMaterial);
+        sail.position.set(1.5, 5, 0);
+        sail.rotation.y = Math.PI / 2;
+        sail.castShadow = true;
+        boatGroup.add(sail);
+
+        boatGroup.position.y = 2;
+        this.boat = boatGroup;
+        this.scene.add(boatGroup);
+    }
+
+    createSkybox() {
+        const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+        const skyMaterial = new THREE.MeshBasicMaterial({
+            color: 0x87ceeb,
+            side: THREE.BackSide,
+        });
+        const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+        this.scene.add(sky);
+
+        // Add some clouds
+        this.createClouds();
+    }
+
+    createClouds() {
+        const cloudGroup = new THREE.Group();
+
+        for (let i = 0; i < 20; i++) {
+            const cloudGeometry = new THREE.SphereGeometry(
+                Math.random() * 3 + 2,
+                8,
+                8
+            );
+            const cloudMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.6,
+            });
+            const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+
+            cloud.position.set(
+                (Math.random() - 0.5) * 400,
+                Math.random() * 50 + 50,
+                (Math.random() - 0.5) * 400
+            );
+
+            cloudGroup.add(cloud);
+        }
+
+        this.scene.add(cloudGroup);
+    }
+
+    populateScene() {
+        // Clear existing objects
+        this.objects.forEach(obj => this.scene.remove(obj.mesh));
+        this.objects = [];
+
+        // Create objects for current items
+        const radius = 30;
+        const angleStep = (Math.PI * 2) / Math.max(this.currentItems.length, 1);
+
+        this.currentItems.forEach((item, index) => {
+            const angle = angleStep * index;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+
+            let mesh;
+
+            if (item.type === 'directory') {
+                // Lighthouse for directories
+                mesh = this.createLighthouse();
+                mesh.position.set(x, 0, z);
+            } else {
+                // Buoy for files
+                mesh = this.createBuoy();
+                mesh.position.set(x, 0, z);
+            }
+
+            mesh.userData = item;
+            this.scene.add(mesh);
+            this.objects.push({ mesh, item });
+        });
+    }
+
+    createLighthouse() {
+        const group = new THREE.Group();
+
+        // Base
+        const baseGeometry = new THREE.CylinderGeometry(2, 2.5, 2, 8);
+        const baseMaterial = new THREE.MeshStandardMaterial({
+            color: 0x808080,
+            metalness: 0.3,
+            roughness: 0.7,
+        });
+        const base = new THREE.Mesh(baseGeometry, baseMaterial);
+        base.position.y = 1;
+        base.castShadow = true;
+        group.add(base);
+
+        // Tower
+        const towerGeometry = new THREE.CylinderGeometry(1.5, 2, 12, 8);
+        const towerMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            metalness: 0.2,
+            roughness: 0.8,
+        });
+        const tower = new THREE.Mesh(towerGeometry, towerMaterial);
+        tower.position.y = 8;
+        tower.castShadow = true;
+        group.add(tower);
+
+        // Red stripe
+        const stripeGeometry = new THREE.CylinderGeometry(1.6, 2.1, 3, 8);
+        const stripeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xff0000,
+            metalness: 0.2,
+            roughness: 0.8,
+        });
+        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+        stripe.position.y = 6;
+        group.add(stripe);
+
+        // Light housing
+        const lightGeometry = new THREE.CylinderGeometry(1.8, 1.5, 2, 8);
+        const lightMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffff00,
+            emissive: 0xffff00,
+            emissiveIntensity: 0.5,
+            metalness: 0.8,
+            roughness: 0.2,
+        });
+        const light = new THREE.Mesh(lightGeometry, lightMaterial);
+        light.position.y = 15;
+        light.castShadow = true;
+        group.add(light);
+
+        // Point light
+        const pointLight = new THREE.PointLight(0xffff00, 1, 50);
+        pointLight.position.y = 15;
+        group.add(pointLight);
+
+        return group;
+    }
+
+    createBuoy() {
+        const group = new THREE.Group();
+
+        // Buoy body
+        const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
+        const bodyMaterial = new THREE.MeshStandardMaterial({
+            color: 0xff6b35,
+            metalness: 0.4,
+            roughness: 0.6,
+        });
+        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        body.position.y = 1.5;
+        body.castShadow = true;
+        group.add(body);
+
+        // White stripe
+        const stripeGeometry = new THREE.CylinderGeometry(1.05, 1.05, 0.5, 16);
+        const stripeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            metalness: 0.4,
+            roughness: 0.6,
+        });
+        const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+        stripe.position.y = 1.5;
+        group.add(stripe);
+
+        // Top pole
+        const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2);
+        const poleMaterial = new THREE.MeshStandardMaterial({
+            color: 0x333333,
+            metalness: 0.8,
+            roughness: 0.2,
+        });
+        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+        pole.position.y = 3;
+        pole.castShadow = true;
+        group.add(pole);
+
+        return group;
+    }
+
+    setupEventListeners() {
+        // Keyboard
+        window.addEventListener('keydown', (e) => {
+            this.keys[e.key.toLowerCase()] = true;
+
+            if (e.key === 'Escape') {
+                this.navigateBack();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            this.keys[e.key.toLowerCase()] = false;
+        });
+
+        // Mouse
+        window.addEventListener('mousemove', (e) => {
+            this.mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('click', () => {
+            if (this.hoveredObject) {
+                this.handleObjectClick(this.hoveredObject);
+            }
+        });
+
+        // Resize
+        window.addEventListener('resize', () => {
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+
+    setupUI() {
+        // Settings button
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').classList.toggle('hidden');
+        });
+
+        // Modal close
+        document.querySelector('.modal-close').addEventListener('click', () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+        });
+
+        // Settings
+        document.getElementById('setting-breadcrumbs').addEventListener('change', (e) => {
+            this.settings.showBreadcrumbs = e.target.checked;
+            document.getElementById('breadcrumbs').style.display = e.target.checked ? 'flex' : 'none';
+        });
+
+        document.getElementById('setting-compass').addEventListener('change', (e) => {
+            this.settings.showCompass = e.target.checked;
+            document.getElementById('compass').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('setting-minimap').addEventListener('change', (e) => {
+            this.settings.showMinimap = e.target.checked;
+            document.getElementById('minimap').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('setting-ocean-theme').addEventListener('change', (e) => {
+            this.settings.oceanTheme = e.target.value;
+            this.updateOceanTheme();
+        });
+
+        document.getElementById('setting-boat-speed').addEventListener('input', (e) => {
+            this.settings.boatSpeed = parseFloat(e.target.value);
+            document.getElementById('speed-value').textContent = this.settings.boatSpeed.toFixed(1) + 'x';
+        });
+
+        // Help toggle
+        document.getElementById('help-toggle').addEventListener('click', () => {
+            document.getElementById('controls-help').classList.toggle('hidden');
+        });
+
+        this.updateBreadcrumbs();
+    }
+
+    updateOceanTheme() {
+        const themes = {
+            blue: 0x1a5f7a,
+            teal: 0x2a9d8f,
+            purple: 0x6a4c93,
+            sunset: 0xe76f51,
+        };
+
+        this.ocean.material.color.setHex(themes[this.settings.oceanTheme] || themes.blue);
+    }
+
+    updateBreadcrumbs() {
+        const breadcrumbsEl = document.getElementById('breadcrumbs');
+        breadcrumbsEl.innerHTML = '';
+
+        // Root
+        const rootCrumb = document.createElement('div');
+        rootCrumb.className = this.currentPath.length === 0 ? 'breadcrumb-item active' : 'breadcrumb-item';
+        rootCrumb.innerHTML = '<span class="breadcrumb-icon">📁</span><span class="breadcrumb-text">root</span>';
+        rootCrumb.addEventListener('click', () => this.navigateToRoot());
+        breadcrumbsEl.appendChild(rootCrumb);
+
+        // Path items
+        this.currentPath.forEach((item, index) => {
+            const crumb = document.createElement('div');
+            crumb.className = index === this.currentPath.length - 1 ? 'breadcrumb-item active' : 'breadcrumb-item';
+            crumb.innerHTML = `<span class="breadcrumb-icon">📁</span><span class="breadcrumb-text">${item.name}</span>`;
+            crumb.addEventListener('click', () => this.navigateToPath(index));
+            breadcrumbsEl.appendChild(crumb);
+        });
+    }
+
+    handleObjectClick(object) {
+        const item = object.userData;
+
+        if (item.type === 'directory') {
+            this.navigateInto(item);
+        } else {
+            this.openFile(item);
+        }
+    }
+
+    navigateInto(directory) {
+        this.currentPath.push(directory);
+        this.currentItems = directory.children || [];
+        this.populateScene();
+        this.updateBreadcrumbs();
+    }
+
+    navigateBack() {
+        if (this.currentPath.length > 0) {
+            this.currentPath.pop();
+
+            if (this.currentPath.length === 0) {
+                this.currentItems = this.fileTree;
+            } else {
+                const parent = this.currentPath[this.currentPath.length - 1];
+                this.currentItems = parent.children || [];
+            }
+
+            this.populateScene();
+            this.updateBreadcrumbs();
+        }
+    }
+
+    navigateToRoot() {
+        this.currentPath = [];
+        this.currentItems = this.fileTree;
+        this.populateScene();
+        this.updateBreadcrumbs();
+    }
+
+    navigateToPath(index) {
+        this.currentPath = this.currentPath.slice(0, index + 1);
+        const target = this.currentPath[index];
+        this.currentItems = target.children || [];
+        this.populateScene();
+        this.updateBreadcrumbs();
+    }
+
+    async openFile(file) {
+        try {
+            const response = await fetch(`/api/open`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: file.path }),
+            });
+
+            if (response.ok) {
+                console.log('Opened file:', file.path);
+                // Show notification
+                this.showNotification(`Opened: ${file.name}`);
+            }
+        } catch (error) {
+            console.error('Failed to open file:', error);
+        }
+    }
+
+    showNotification(message) {
+        // Simple notification - could be enhanced
+        console.log('Notification:', message);
+    }
+
+    updateBoatMovement() {
+        const speed = 0.2 * this.settings.boatSpeed;
+        const rotationSpeed = 0.03;
+
+        // Forward/Backward
+        if (this.keys['w'] || this.keys['arrowup']) {
+            this.boat.position.x += Math.sin(this.boat.rotation.y) * speed;
+            this.boat.position.z += Math.cos(this.boat.rotation.y) * speed;
+        }
+        if (this.keys['s'] || this.keys['arrowdown']) {
+            this.boat.position.x -= Math.sin(this.boat.rotation.y) * speed;
+            this.boat.position.z -= Math.cos(this.boat.rotation.y) * speed;
+        }
+
+        // Rotation
+        if (this.keys['a'] || this.keys['arrowleft']) {
+            this.boat.rotation.y += rotationSpeed;
+        }
+        if (this.keys['d'] || this.keys['arrowright']) {
+            this.boat.rotation.y -= rotationSpeed;
+        }
+
+        // Update camera to follow boat
+        const cameraPosition = new THREE.Vector3();
+        cameraPosition.copy(this.cameraOffset);
+        cameraPosition.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.boat.rotation.y);
+        cameraPosition.add(this.boat.position);
+
+        this.camera.position.lerp(cameraPosition, 0.1);
+
+        const lookAtPosition = new THREE.Vector3();
+        lookAtPosition.copy(this.cameraLookOffset);
+        lookAtPosition.add(this.boat.position);
+        this.camera.lookAt(lookAtPosition);
+
+        // Update compass
+        this.updateCompass();
+    }
+
+    updateCompass() {
+        const needle = document.querySelector('.compass-needle');
+        const rotation = -this.boat.rotation.y * (180 / Math.PI);
+        needle.style.transform = `rotate(${rotation}deg)`;
+    }
+
+    updateOceanWaves(time) {
+        const positions = this.ocean.geometry.attributes.position;
+
+        for (let i = 0; i < this.oceanWaves.length; i++) {
+            const wave = this.oceanWaves[i];
+            const x = wave.x;
+            const y = wave.y;
+            const offset = wave.offset;
+
+            const waveHeight = Math.sin(x * 0.05 + time + offset) * 0.3 +
+                Math.sin(y * 0.05 + time * 0.7 + offset) * 0.2;
+
+            positions.setZ(i, waveHeight);
+        }
+
+        positions.needsUpdate = true;
+        this.ocean.geometry.computeVertexNormals();
+    }
+
+    updateHoverEffect() {
+        this.raycaster.setFromCamera(this.mouse, this.camera);
+
+        const intersects = this.raycaster.intersectObjects(
+            this.objects.map(obj => obj.mesh),
+            true
+        );
+
+        if (intersects.length > 0) {
+            const object = intersects[0].object.parent || intersects[0].object;
+
+            if (object !== this.hoveredObject) {
+                // Reset previous
+                if (this.hoveredObject) {
+                    this.hoveredObject.scale.set(1, 1, 1);
+                }
+
+                // Set new
+                this.hoveredObject = object;
+                this.hoveredObject.scale.set(1.1, 1.1, 1.1);
+
+                // Update info panel
+                const item = object.userData;
+                const infoPanel = document.getElementById('hover-info');
+                infoPanel.classList.remove('info-hidden');
+                infoPanel.querySelector('.info-icon').textContent = item.type === 'directory' ? '🗼' : '📄';
+                infoPanel.querySelector('.info-name').textContent = item.name;
+                infoPanel.querySelector('.info-type').textContent = item.type;
+            }
+        } else {
+            if (this.hoveredObject) {
+                this.hoveredObject.scale.set(1, 1, 1);
+                this.hoveredObject = null;
+                document.getElementById('hover-info').classList.add('info-hidden');
+            }
+        }
+    }
+
+    animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const time = Date.now() * 0.001;
+
+        this.updateBoatMovement();
+        this.updateOceanWaves(time);
+        this.updateHoverEffect();
+
+        // Animate buoys bobbing
+        this.objects.forEach(obj => {
+            if (obj.item.type === 'file') {
+                obj.mesh.position.y = Math.sin(time * 2 + obj.mesh.position.x) * 0.3;
+                obj.mesh.rotation.z = Math.sin(time + obj.mesh.position.z) * 0.1;
+            }
+        });
+
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+// Initialize the application
+window.addEventListener('DOMContentLoaded', () => {
+    new Vimlantis();
+});
