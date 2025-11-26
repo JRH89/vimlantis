@@ -37,8 +37,11 @@ end
 
 -- Get the plugin root directory
 function M.get_plugin_root()
-  local str = debug.getinfo(2, "S").source:sub(2)
-  return vim.fn.fnamemodify(str, ":h:h")
+  -- Get the directory where this init.lua file is located
+  local str = debug.getinfo(1, "S").source:sub(2)
+  -- Go up two levels: lua/vimlantis/init.lua -> lua/vimlantis -> lua -> root
+  local plugin_root = vim.fn.fnamemodify(str, ":h:h:h")
+  return plugin_root
 end
 
 -- Start the web server
