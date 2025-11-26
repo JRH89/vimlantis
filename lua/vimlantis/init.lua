@@ -10,7 +10,7 @@ M.config = {
   show_compass = true,
   show_minimap = true,
   ocean_theme = 'blue',
-  boat_speed = 1.0,
+  boat_speed = 1.5,
 }
 
 -- Server state
