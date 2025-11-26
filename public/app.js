@@ -766,7 +766,7 @@ class Vimlantis {
             const relZ = obj.mesh.position.z - this.boat.position.z;
 
             // Rotate coordinates to match boat rotation (so boat is always facing up)
-            const angle = this.boat.rotation.y;
+            const angle = this.boat.rotation.y + Math.PI;
             const rotX = relX * Math.cos(angle) - relZ * Math.sin(angle);
             const rotZ = relX * Math.sin(angle) + relZ * Math.cos(angle);
 
