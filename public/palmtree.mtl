@@ -1,13 +1,22 @@
-# Blender 4.0.2 MTL File: 'None'
+# Blender 4.0.2 MTL File: 'palmtree.blend'
 # www.blender.org
 
-newmtl Palm_V2
-Ns 200.000000
+newmtl Material.004
+Ns 250.000000
 Ka 1.000000 1.000000 1.000000
+Kd 0.384368 0.098595 0.019613
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.450000
+d 1.000000
 illum 2
-map_Kd C:/Palm_V2.jpg
-map_d C:/Palm_V2_Opacity.jpg
-map_Bump -bm 1.000000 C:/Palm_V2_Normal.jpg
+
+newmtl Material.005
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.007707 0.800000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2

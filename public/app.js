@@ -13,6 +13,7 @@ class Vimlantis {
         this.currentPath = [];
         this.currentItems = [];
         this.barrelModel = null; // Cache for barrel GLB model
+        this.palmModel = null; // Cache for palm OBJ model
 
         // Settings
         this.settings = {
@@ -43,6 +44,7 @@ class Vimlantis {
         await this.createOcean();
         await this.createBoat();
         await this.loadBarrelModel(); // Load barrel model
+        await this.loadPalmModel(); // Load palm tree model
         this.createSkybox();
         this.setupEventListeners();
         this.setupUI();
@@ -82,7 +84,7 @@ class Vimlantis {
             0.1,
             1000
         );
-        this.camera.position.set(0, 15, 25);
+        this.camera.position.set(0, 15, 15);
 
         // Renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -153,7 +155,7 @@ class Vimlantis {
                 metalness: 0.3,
                 roughness: 0.7,
                 transparent: true,
-                opacity: 0.9,
+                opacity: 0.8,
             });
 
             this.useShaders = false;
@@ -162,6 +164,7 @@ class Vimlantis {
 
         this.ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
         this.ocean.rotation.x = -Math.PI / 2;
+        this.ocean.position.y = 0.4;
         this.ocean.receiveShadow = true;
         this.scene.add(this.ocean);
 
@@ -372,85 +375,92 @@ class Vimlantis {
         const group = new THREE.Group();
 
         // Sandy island base
-        const islandGeometry = new THREE.CylinderGeometry(3, 3.5, 0.8, 8);
+        const islandGeometry = new THREE.CylinderGeometry(12, 5, 1, 12);
         const islandMaterial = new THREE.MeshStandardMaterial({
             color: 0xf4e4c1, // Sandy beach color
             metalness: 0.1,
             roughness: 0.9,
         });
         const island = new THREE.Mesh(islandGeometry, islandMaterial);
-        island.position.y = 0.4;
+        island.position.y = 0.2;
         island.castShadow = true;
         island.receiveShadow = true;
         group.add(island);
+        // Add palm tree model if loaded
+        if (this.palmModel) {
+            const palm1 = this.palmModel.clone(true);
+            palm1.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            palm1.position.set(-5, 3,-5);
+            palm1.scale.set(3,3,3);
+            group.add(palm1);
 
-        // Palm tree trunk
-        const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 6, 8);
-        const trunkMaterial = new THREE.MeshStandardMaterial({
-            color: 0x8b6f47, // Brown bark
-            metalness: 0.1,
-            roughness: 0.9,
-        });
-        const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-        trunk.position.y = 3.8;
-        trunk.castShadow = true;
-        group.add(trunk);
-
-        // Palm fronds (leaves) - create 6 fronds in a circle
-        const frondMaterial = new THREE.MeshStandardMaterial({
-            color: 0x2d5016, // Dark green
-            metalness: 0.1,
-            roughness: 0.8,
-            side: THREE.DoubleSide,
-        });
-
-        for (let i = 0; i < 6; i++) {
-            const angle = (i / 6) * Math.PI * 2;
-
-            // Frond geometry - elongated and curved
-            const frondGeometry = new THREE.ConeGeometry(0.8, 3, 4);
-            const frond = new THREE.Mesh(frondGeometry, frondMaterial);
-
-            // Position at top of trunk
-            frond.position.y = 7.5;
-            frond.position.x = Math.cos(angle) * 0.5;
-            frond.position.z = Math.sin(angle) * 0.5;
-
-            // Rotate to fan out
-            frond.rotation.z = Math.cos(angle) * 0.6;
-            frond.rotation.x = Math.sin(angle) * 0.6;
-            frond.rotation.y = angle;
-
-            frond.castShadow = true;
-            group.add(frond);
+            // Optional second palm for variety
+            const palm2 = this.palmModel.clone(true);
+            palm2.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+            palm2.position.set(1.5, 3, 1);
+            palm2.scale.set(3,3,3);
+            palm2.rotation.y = Math.PI / 4;
+            group.add(palm2);
         }
 
-        // Add a second smaller palm tree for variety
-        const trunk2 = trunk.clone();
-        trunk2.scale.set(0.7, 0.7, 0.7);
-        trunk2.position.set(1.5, 2.6, 1);
-        group.add(trunk2);
-
-        // Fronds for second tree
-        for (let i = 0; i < 5; i++) {
-            const angle = (i / 5) * Math.PI * 2;
-            const frondGeometry = new THREE.ConeGeometry(0.6, 2.2, 4);
-            const frond = new THREE.Mesh(frondGeometry, frondMaterial);
-
-            frond.position.y = 5;
-            frond.position.x = 1.5 + Math.cos(angle) * 0.3;
-            frond.position.z = 1 + Math.sin(angle) * 0.3;
-
-            frond.rotation.z = Math.cos(angle) * 0.6;
-            frond.rotation.x = Math.sin(angle) * 0.6;
-            frond.rotation.y = angle;
-
-            frond.castShadow = true;
-            group.add(frond);
-        }
-
-        group.scale.set(1.5, 1.5, 1.5); // Make islands bigger
+        group.scale.set(1,1,1); // Make islands bigger
         return group;
+    }
+
+    async loadPalmModel() {
+        if (this.palmModel) {
+            return this.palmModel;
+        }
+
+        try {
+            const mtlLoader = new THREE.MTLLoader();
+            const materials = await new Promise((resolve, reject) => {
+                mtlLoader.load(
+                    './palmtree.mtl',
+                    (mtl) => resolve(mtl),
+                    undefined,
+                    (error) => reject(error)
+                );
+            });
+
+            materials.preload();
+
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+
+            const obj = await new Promise((resolve, reject) => {
+                objLoader.load(
+                    './palmtree.obj',
+                    (object) => resolve(object),
+                    undefined,
+                    (error) => reject(error)
+                );
+            });
+
+            obj.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+
+            this.palmModel = obj;
+            console.log('✨ Palm tree model loaded successfully!');
+            return this.palmModel;
+        } catch (error) {
+            console.error('Failed to load palm tree model:', error);
+            return null;
+        }
     }
 
 
@@ -460,17 +470,38 @@ class Vimlantis {
         }
 
         try {
-            const loader = new THREE.GLTFLoader();
-            const gltf = await new Promise((resolve, reject) => {
-                loader.load(
-                    './barrels.glb',
-                    (gltf) => resolve(gltf),
+            const mtlLoader = new THREE.MTLLoader();
+            const materials = await new Promise((resolve, reject) => {
+                mtlLoader.load(
+                    './barrel.mtl',
+                    (mtl) => resolve(mtl),
                     undefined,
                     (error) => reject(error)
                 );
             });
 
-            this.barrelModel = gltf.scene;
+            materials.preload();
+
+            const objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+
+            const obj = await new Promise((resolve, reject) => {
+                objLoader.load(
+                    './barrel.obj',
+                    (object) => resolve(object),
+                    undefined,
+                    (error) => reject(error)
+                );
+            });
+
+            obj.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
+
+            this.barrelModel = obj;
             console.log('✨ Barrel model loaded successfully!');
             return this.barrelModel;
         } catch (error) {
