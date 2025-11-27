@@ -64,6 +64,5 @@ Optional command palette:
 
 - ⭐ Star the repo and open issues for bugs/ideas.
 - � Run `:Vimlantis` after reinstalling if things get out of sync.
-- 🤝 Contributions welcome—see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Happy sailing! 🌊
+Happy sailing, Pirates! 🌊
