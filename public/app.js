@@ -528,6 +528,7 @@ class Vimlantis {
             });
 
             barrel.scale.set(2, 2, 2);
+            barrel.position.y = -0.5;
             group.add(barrel);
         } else {
             const bodyGeometry = new THREE.SphereGeometry(1, 16, 16);
