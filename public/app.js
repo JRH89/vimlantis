@@ -15,14 +15,26 @@ class Vimlantis {
         this.barrelModel = null; // Cache for barrel GLB model
         this.palmModel = null; // Cache for palm OBJ model
 
-        // Settings
+        // Settings - start from global config + per-user overrides
+        const cfg = window.VIMLANTIS_CONFIG || {};
+        const ui = cfg.ui || {};
         this.settings = {
-            showBreadcrumbs: true,
-            showCompass: true,
-            showMinimap: true,
-            oceanTheme: 'blue',
-            boatSpeed: 1.0,
+            showBreadcrumbs: ui.showBreadcrumbs ?? true,
+            showCompass: ui.showCompass ?? true,
+            showMinimap: ui.showMinimap ?? true,
+            oceanTheme: ui.oceanTheme ?? 'blue',
+            boatSpeed: ui.boatSpeed ?? 2.0,
         };
+
+        // Apply any stored per-user settings from localStorage
+        try {
+            const stored = JSON.parse(localStorage.getItem('vimlantisSettings') || '{}');
+            if (stored && typeof stored === 'object') {
+                Object.assign(this.settings, stored);
+            }
+        } catch (e) {
+            console.warn('Failed to read vimlantisSettings from localStorage:', e);
+        }
 
         // Controls
         this.keys = {};
@@ -602,31 +614,63 @@ class Vimlantis {
             document.getElementById('settings-modal').classList.add('hidden');
         });
 
-        // Settings
-        document.getElementById('setting-breadcrumbs').addEventListener('change', (e) => {
-            this.settings.showBreadcrumbs = e.target.checked;
-            document.getElementById('breadcrumbs').style.display = e.target.checked ? 'flex' : 'none';
-        });
+        // Settings - initialize from current settings
+        const breadcrumbsCheckbox = document.getElementById('setting-breadcrumbs');
+        const compassCheckbox = document.getElementById('setting-compass');
+        const minimapCheckbox = document.getElementById('setting-minimap');
+        const oceanThemeSelect = document.getElementById('setting-ocean-theme');
+        const boatSpeedSlider = document.getElementById('setting-boat-speed');
+        const speedValueLabel = document.getElementById('speed-value');
 
-        document.getElementById('setting-compass').addEventListener('change', (e) => {
-            this.settings.showCompass = e.target.checked;
-            document.getElementById('compass').style.display = e.target.checked ? 'block' : 'none';
-        });
+        if (breadcrumbsCheckbox) {
+            breadcrumbsCheckbox.checked = this.settings.showBreadcrumbs;
+            document.getElementById('breadcrumbs').style.display = this.settings.showBreadcrumbs ? 'flex' : 'none';
+            breadcrumbsCheckbox.addEventListener('change', (e) => {
+                this.settings.showBreadcrumbs = e.target.checked;
+                document.getElementById('breadcrumbs').style.display = e.target.checked ? 'flex' : 'none';
+                localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
+            });
+        }
 
-        document.getElementById('setting-minimap').addEventListener('change', (e) => {
-            this.settings.showMinimap = e.target.checked;
-            document.getElementById('minimap').style.display = e.target.checked ? 'block' : 'none';
-        });
+        if (compassCheckbox) {
+            compassCheckbox.checked = this.settings.showCompass;
+            document.getElementById('compass').style.display = this.settings.showCompass ? 'block' : 'none';
+            compassCheckbox.addEventListener('change', (e) => {
+                this.settings.showCompass = e.target.checked;
+                document.getElementById('compass').style.display = e.target.checked ? 'block' : 'none';
+                localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
+            });
+        }
 
-        document.getElementById('setting-ocean-theme').addEventListener('change', (e) => {
-            this.settings.oceanTheme = e.target.value;
+        if (minimapCheckbox) {
+            minimapCheckbox.checked = this.settings.showMinimap;
+            document.getElementById('minimap').style.display = this.settings.showMinimap ? 'block' : 'none';
+            minimapCheckbox.addEventListener('change', (e) => {
+                this.settings.showMinimap = e.target.checked;
+                document.getElementById('minimap').style.display = e.target.checked ? 'block' : 'none';
+                localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
+            });
+        }
+
+        if (oceanThemeSelect) {
+            oceanThemeSelect.value = this.settings.oceanTheme;
             this.updateOceanTheme();
-        });
+            oceanThemeSelect.addEventListener('change', (e) => {
+                this.settings.oceanTheme = e.target.value;
+                this.updateOceanTheme();
+                localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
+            });
+        }
 
-        document.getElementById('setting-boat-speed').addEventListener('input', (e) => {
-            this.settings.boatSpeed = parseFloat(e.target.value);
-            document.getElementById('speed-value').textContent = this.settings.boatSpeed.toFixed(1) + 'x';
-        });
+        if (boatSpeedSlider && speedValueLabel) {
+            boatSpeedSlider.value = this.settings.boatSpeed;
+            speedValueLabel.textContent = this.settings.boatSpeed.toFixed(1) + 'x';
+            boatSpeedSlider.addEventListener('input', (e) => {
+                this.settings.boatSpeed = parseFloat(e.target.value);
+                speedValueLabel.textContent = this.settings.boatSpeed.toFixed(1) + 'x';
+                localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
+            });
+        }
 
         // Help toggle: show controls and hide question mark
         const helpToggleBtn = document.getElementById('help-toggle');
@@ -667,7 +711,13 @@ class Vimlantis {
             sunset: 0xe76f51,
         };
 
-        this.ocean.material.color.setHex(themes[this.settings.oceanTheme] || themes.blue);
+        const target = themes[this.settings.oceanTheme] || themes.blue;
+
+        if (!this.ocean || !this.ocean.material || !this.ocean.material.color) {
+            return;
+        }
+
+        this.ocean.material.color.setHex(target);
     }
 
     updateBreadcrumbs() {
@@ -881,8 +931,15 @@ class Vimlantis {
                 const y = wave.y;
                 const offset = wave.offset;
 
-                const waveHeight = Math.sin(x * 0.05 + time + offset) * 0.3 +
+                const baseWave =
+                    Math.sin(x * 0.05 + time + offset) * 0.3 +
                     Math.sin(y * 0.05 + time * 0.7 + offset) * 0.2;
+
+                // Procedural foam-ish effect: accentuate crests slightly
+                const foamFactor = Math.max(baseWave, 0.25); // only positive peaks
+                const foamBump = foamFactor * 0.45;
+
+                const waveHeight = baseWave + foamBump;
 
                 positions.setZ(i, waveHeight);
             }
