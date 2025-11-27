@@ -375,7 +375,7 @@ class Vimlantis {
         const group = new THREE.Group();
 
         // Sandy island base
-        const islandGeometry = new THREE.CylinderGeometry(12, 5, 1, 12);
+        const islandGeometry = new THREE.CylinderGeometry(8, 16, 2, 16);
         const islandMaterial = new THREE.MeshStandardMaterial({
             color: 0xf4e4c1, // Sandy beach color
             metalness: 0.1,
@@ -395,7 +395,7 @@ class Vimlantis {
                     child.receiveShadow = true;
                 }
             });
-            palm1.position.set(-5, 3,-5);
+            palm1.position.set(-5, 2.8,-5);
             palm1.scale.set(3,3,3);
             group.add(palm1);
 
@@ -407,7 +407,7 @@ class Vimlantis {
                     child.receiveShadow = true;
                 }
             });
-            palm2.position.set(1.5, 3, 1);
+            palm2.position.set(1.5, 2.8, 1);
             palm2.scale.set(3,3,3);
             palm2.rotation.y = Math.PI / 4;
             group.add(palm2);
