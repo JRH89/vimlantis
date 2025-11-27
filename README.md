@@ -12,6 +12,17 @@ cd vimlantis
 ./install.sh
 ```
 
+The script checks for Neovim + Node.js, installs dependencies, and wires the plugin into your config.
+
+On Debian/Ubuntu systems, if Node.js is not installed, `install.sh` will try:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y nodejs npm
+```
+
+If `apt-get` is not available or the install fails, youll be asked to install Node.js (v16 or higher) manually from https://nodejs.org and re-run the script.
+
 The script checks for Neovim + Node.js, installs dependencies, and wires the plugin into your config. When it finishes, open a project in Neovim (or LazyVim) and run:
 
 ```vim

@@ -19,6 +19,30 @@ NC='\033[0m' # No Color
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Attempt to install Node.js and npm on Debian/Ubuntu if missing
+echo -e "${BLUE}Checking for Node.js...${NC}"
+
+if ! command -v node &> /dev/null; then
+    echo -e "${YELLOW}Node.js not found. Attempting to install via apt-get (Debian/Ubuntu)...${NC}"
+
+    if command -v apt-get &> /dev/null; then
+        echo -e "${BLUE}Running: sudo apt-get update && sudo apt-get install -y nodejs npm${NC}"
+        sudo apt-get update
+        sudo apt-get install -y nodejs npm || {
+            echo -e "${RED}Failed to install Node.js/npm via apt-get.${NC}"
+            echo "Please install Node.js (v16 or higher) manually from https://nodejs.org and re-run this script."
+            exit 1
+        }
+    else
+        echo -e "${RED}apt-get not found.${NC}"
+        echo "Automatic install is only supported on Debian/Ubuntu via apt-get."
+        echo "Please install Node.js (v16 or higher) manually from https://nodejs.org and re-run this script."
+        exit 1
+    fi
+else
+    echo -e "${GREEN}Node.js is already installed.${NC}"
+fi
+
 create_lazy_spec_file() {
     local lazy_plugins_dir="$NVIM_CONFIG_DIR/lua/plugins"
     local lazy_file="$lazy_plugins_dir/vimlantis.lua"
@@ -75,8 +99,8 @@ EOF
 echo -e "${BLUE}Checking prerequisites...${NC}"
 
 if ! command -v node &> /dev/null; then
-    echo -e "${RED}Error: Node.js is not installed${NC}"
-    echo "Please install Node.js (v16 or higher) from https://nodejs.org"
+    echo -e "${RED}Error: Node.js is not installed even after attempting automatic installation.${NC}"
+    echo "Please install Node.js (v16 or higher) from https://nodejs.org and re-run this script."
     exit 1
 fi
 
