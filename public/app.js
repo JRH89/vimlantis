@@ -201,11 +201,15 @@ class Vimlantis {
 
             const shipModel = gltf.scene;
 
-            // Enable shadows for all meshes in the model
+            // Enable shadows for meshes and disable any lights/cameras from the GLB
             shipModel.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
+                }
+
+                if (child.isLight || child.isCamera) {
+                    child.visible = false;
                 }
             });
 
@@ -624,10 +628,25 @@ class Vimlantis {
             document.getElementById('speed-value').textContent = this.settings.boatSpeed.toFixed(1) + 'x';
         });
 
-        // Help toggle
-        document.getElementById('help-toggle').addEventListener('click', () => {
-            document.getElementById('controls-help').classList.toggle('hidden');
-        });
+        // Help toggle: show controls and hide question mark
+        const helpToggleBtn = document.getElementById('help-toggle');
+        const controlsHelp = document.getElementById('controls-help');
+        const controlsHelpClose = document.getElementById('controls-help-close');
+
+        if (helpToggleBtn && controlsHelp) {
+            helpToggleBtn.addEventListener('click', () => {
+                controlsHelp.classList.remove('hidden');
+                helpToggleBtn.style.visibility = 'hidden';
+            });
+        }
+
+        // Close button inside controls: hide panel and show question mark
+        if (controlsHelpClose && controlsHelp && helpToggleBtn) {
+            controlsHelpClose.addEventListener('click', () => {
+                controlsHelp.classList.add('hidden');
+                helpToggleBtn.style.visibility = 'visible';
+            });
+        }
 
         // Initialize Minimap
         const minimapCanvas = document.getElementById('minimap-canvas');

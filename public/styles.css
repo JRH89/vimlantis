@@ -309,11 +309,37 @@ body {
   min-width: 200px;
 }
 
+.controls-help-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.controls-help-close {
+  background: #b00020;
+  border: none;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.6);
+}
+
+.controls-help-close:hover {
+  background: #e53935;
+}
+
 #controls-help h3 {
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-md);
-  color: var(--text-primary);
 }
 
 .control-item {
@@ -341,7 +367,19 @@ kbd {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+#help-toggle {
+  bottom: var(--spacing-lg);
+  left: var(--spacing-lg);
+  visibility: hidden;
+}
 
+#controls-help:visible ~ #help-toggle {
+  visibility: hidden;
+}
+
+#controls-help:not(:visible) ~ #help-toggle {
+  visibility: visible;
+}
 
 /* Icon Buttons */
 .icon-btn {
@@ -373,11 +411,6 @@ kbd {
 #settings-btn {
   top: var(--spacing-lg);
   right: calc(120px + var(--spacing-lg) + var(--spacing-md));
-}
-
-#help-toggle {
-  bottom: var(--spacing-lg);
-  left: calc(200px + var(--spacing-lg) + var(--spacing-md));
 }
 
 /* Modal */
