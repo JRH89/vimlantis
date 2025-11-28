@@ -43,6 +43,73 @@ else
     echo -e "${GREEN}Node.js is already installed.${NC}"
 fi
 
+# Check for Neovim and Lazy.nvim, and offer installation options if missing
+echo ""
+echo -e "${BLUE}Checking for Neovim/Lazy.nvim...${NC}"
+
+HAS_NVIM=false
+HAS_LAZY=false
+
+if command -v nvim &> /dev/null; then
+    HAS_NVIM=true
+    echo -e "${GREEN}Neovim is installed.${NC}"
+
+    # Detect Lazy.nvim by looking for lazy.lua or lazy.nvim directory in config
+    if [ -n "$XDG_CONFIG_HOME" ]; then
+        NVIM_CONFIG_DIR="$XDG_CONFIG_HOME/nvim"
+    else
+        NVIM_CONFIG_DIR="$HOME/.config/nvim"
+    fi
+
+    if [ -f "$NVIM_CONFIG_DIR/lua/lazy.lua" ] || [ -d "$NVIM_CONFIG_DIR/lazy/lazy.nvim" ] || [ -d "$NVIM_CONFIG_DIR/pack/lazy/start/lazy.nvim" ]; then
+        HAS_LAZY=true
+        echo -e "${GREEN}Lazy.nvim appears to be installed.${NC}"
+    fi
+fi
+
+if [ "$HAS_NVIM" = false ] && [ "$HAS_LAZY" = false ]; then
+    echo ""
+    echo -e "${YELLOW}Neovim and Lazy.nvim were not detected.${NC}"
+    echo "1) Install Neovim"
+    echo "2) Install LazyVim (requires Neovim)"
+    echo "3) Continue without installing"
+    echo ""
+    read -p "Enter choice [1-3]: " NVIM_LAZY_CHOICE
+
+    case $NVIM_LAZY_CHOICE in
+        1)
+            echo -e "${BLUE}Attempting to install Neovim...${NC}"
+            if command -v apt-get &> /dev/null; then
+                echo -e "${BLUE}Detected apt-get (Ubuntu/Mint and similar). Installing via apt-get...${NC}"
+                sudo apt-get update
+                sudo apt-get install -y neovim || {
+                    echo -e "${RED}Failed to install Neovim automatically via apt-get.${NC}"
+                    echo "Please install Neovim manually from https://neovim.io and re-run this script if needed."
+                }
+            elif command -v pacman &> /dev/null; then
+                echo -e "${BLUE}Detected pacman (Arch/Manjaro and similar). Installing via pacman...${NC}"
+                sudo pacman -Sy --noconfirm neovim || {
+                    echo -e "${RED}Failed to install Neovim automatically via pacman.${NC}"
+                    echo "Please install Neovim manually from https://neovim.io and re-run this script if needed."
+                }
+            else
+                echo -e "${RED}No supported package manager (apt-get or pacman) detected for automatic Neovim install.${NC}"
+                echo "Please install Neovim manually from https://neovim.io."
+            fi
+            ;;
+        2)
+            echo -e "${BLUE}LazyVim installation not automated by this script yet.${NC}"
+            echo "Please follow LazyVim's installation instructions at: https://www.lazyvim.org/installation"
+            ;;
+        3)
+            echo -e "${YELLOW}Continuing without installing Neovim/LazyVim.${NC}"
+            ;;
+        *)
+            echo -e "${RED}Invalid choice, continuing without installing Neovim/LazyVim.${NC}"
+            ;;
+    esac
+fi
+
 create_lazy_spec_file() {
     local lazy_plugins_dir="$NVIM_CONFIG_DIR/lua/plugins"
     local lazy_file="$lazy_plugins_dir/vimlantis.lua"
