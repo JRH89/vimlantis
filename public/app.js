@@ -22,8 +22,39 @@ class Vimlantis {
             showBreadcrumbs: ui.showBreadcrumbs ?? true,
             showCompass: ui.showCompass ?? true,
             showMinimap: ui.showMinimap ?? true,
-            oceanTheme: ui.oceanTheme ?? 'blue',
+            showMinimap: ui.showMinimap ?? true,
+            oceanTheme: ui.oceanTheme ?? 'pirate',
             boatSpeed: ui.boatSpeed ?? 2.0,
+        };
+
+        this.themes = {
+            pirate: {
+                name: 'Pirate Ocean',
+                waterColor: 0x1a5f7a,
+                skyColor: 0x87ceeb,
+                fogColor: 0x1a3a52,
+                groundType: 'ocean',
+                directoryModel: 'lighthouse',
+                fileModel: 'buoy'
+            },
+            ghost: {
+                name: 'Ghost Cemetery',
+                waterColor: 0x2b3a42, // Dark muddy ground
+                skyColor: 0x0a0a0a,   // Pitch black night
+                fogColor: 0x111111,
+                groundType: 'ground',
+                directoryModel: 'headstone',
+                fileModel: 'ghost'
+            },
+            space: {
+                name: 'Deep Space',
+                waterColor: 0x000000,
+                skyColor: 0x000000,
+                fogColor: 0x000000,
+                groundType: 'space',
+                directoryModel: 'planet',
+                fileModel: 'asteroid'
+            }
         };
 
         // Apply any stored per-user settings from localStorage
@@ -54,16 +85,21 @@ class Vimlantis {
         this.setupScene();
         this.setupLights();
         await this.createOcean();
+        this.createGround(); // Create separate ground for Ghost theme
         await this.createBoat();
         await this.loadBarrelModel(); // Load barrel model
         await this.loadPalmModel(); // Load palm tree model
         this.createSkybox();
+        this.createStars(); // Create stars for Ghost theme
         this.setupEventListeners();
         this.setupUI();
         this.animate();
 
         // Initial population
         this.populateScene();
+
+        // Apply initial theme after everything is created
+        this.updateTheme();
 
         // Hide loading screen
         setTimeout(() => {
@@ -163,7 +199,7 @@ class Vimlantis {
         } else {
             // Fallback to standard material
             oceanMaterial = new THREE.MeshStandardMaterial({
-                color: 0x1a5f7a,
+                color: this.themes[this.settings.oceanTheme]?.waterColor || 0x1a5f7a,
                 metalness: 0.3,
                 roughness: 0.7,
                 transparent: true,
@@ -194,6 +230,48 @@ class Vimlantis {
                 });
             }
         }
+    }
+
+    createGround() {
+        const groundGeometry = new THREE.PlaneGeometry(1000, 1000, 100, 100);
+        const groundMaterial = new THREE.MeshStandardMaterial({
+            color: 0x3b2d24, // Brown muddy ground
+            metalness: 0.0,
+            roughness: 1.0,
+        });
+
+        // Add random height variation for a muddy, uneven look
+        const positions = groundGeometry.attributes.position;
+        for (let i = 0; i < positions.count; i++) {
+            const x = positions.getX(i);
+            const y = positions.getY(i);
+
+            // Simple noise-like variation
+            const noise = Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.3 +
+                Math.sin(x * 0.1 + 10) * Math.cos(y * 0.1 + 10) * 0.15 +
+                Math.random() * 0.2;
+
+            positions.setZ(i, noise);
+        }
+        positions.needsUpdate = true;
+        groundGeometry.computeVertexNormals();
+
+        // Add some color variation
+        const colors = [];
+        for (let i = 0; i < positions.count; i++) {
+            // Vary between darker and lighter browns
+            const variation = 0.8 + Math.random() * 0.4;
+            colors.push(variation, variation, variation);
+        }
+        groundGeometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        groundMaterial.vertexColors = true;
+
+        this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        this.ground.rotation.x = -Math.PI / 2;
+        this.ground.position.y = 0;
+        this.ground.receiveShadow = true;
+        this.ground.visible = false; // Hidden by default
+        this.scene.add(this.ground);
     }
 
     async createBoat() {
@@ -252,6 +330,92 @@ class Vimlantis {
         this.scene.add(boatGroup);
     }
 
+    createSkeleton() {
+        const skeletonGroup = new THREE.Group();
+
+        const boneMaterial = new THREE.MeshStandardMaterial({
+            color: 0xdddddd,
+            roughness: 0.8,
+            metalness: 0.1
+        });
+
+        // Pelvis
+        const pelvisGeo = new THREE.BoxGeometry(1.2, 0.6, 0.8);
+        const pelvis = new THREE.Mesh(pelvisGeo, boneMaterial);
+        pelvis.position.y = 0;
+        pelvis.castShadow = true;
+        skeletonGroup.add(pelvis);
+
+        // Spine
+        const spineGeo = new THREE.CylinderGeometry(0.3, 0.35, 2, 8);
+        const spine = new THREE.Mesh(spineGeo, boneMaterial);
+        spine.position.y = 1.3;
+        spine.castShadow = true;
+        skeletonGroup.add(spine);
+
+        // Ribcage (horizontal ribs)
+        for (let i = 0; i < 5; i++) {
+            const ribGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.0, 6);
+            const rib = new THREE.Mesh(ribGeo, boneMaterial);
+            rib.rotation.z = Math.PI / 2;
+            rib.position.y = 1.0 + i * 0.3;
+            rib.position.x = 0;
+            rib.castShadow = true;
+            skeletonGroup.add(rib);
+        }
+
+        // Skull
+        const skullGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const skull = new THREE.Mesh(skullGeo, boneMaterial);
+        skull.position.y = 2.8;
+        skull.scale.set(1, 1.2, 1);
+        skull.castShadow = true;
+        skeletonGroup.add(skull);
+
+        // Eye sockets (dark)
+        const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        const eyeGeo = new THREE.SphereGeometry(0.12, 8, 8);
+
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+        leftEye.position.set(-0.2, 2.85, 0.4);
+        skeletonGroup.add(leftEye);
+
+        const rightEye = new THREE.Mesh(eyeGeo, eyeMaterial);
+        rightEye.position.set(0.2, 2.85, 0.4);
+        skeletonGroup.add(rightEye);
+
+        // Arms
+        const armGeo = new THREE.CylinderGeometry(0.12, 0.1, 1.5, 8);
+
+        const leftArm = new THREE.Mesh(armGeo, boneMaterial);
+        leftArm.position.set(-0.8, 1.5, 0);
+        leftArm.rotation.z = Math.PI / 6;
+        leftArm.castShadow = true;
+        skeletonGroup.add(leftArm);
+
+        const rightArm = new THREE.Mesh(armGeo, boneMaterial);
+        rightArm.position.set(0.8, 1.5, 0);
+        rightArm.rotation.z = -Math.PI / 6;
+        rightArm.castShadow = true;
+        skeletonGroup.add(rightArm);
+
+        // Legs
+        const legGeo = new THREE.CylinderGeometry(0.15, 0.12, 1.8, 8);
+
+        const leftLeg = new THREE.Mesh(legGeo, boneMaterial);
+        leftLeg.position.set(-0.35, -0.9, 0);
+        leftLeg.castShadow = true;
+        skeletonGroup.add(leftLeg);
+
+        const rightLeg = new THREE.Mesh(legGeo, boneMaterial);
+        rightLeg.position.set(0.35, -0.9, 0);
+        rightLeg.castShadow = true;
+        skeletonGroup.add(rightLeg);
+
+        skeletonGroup.position.y = 2;
+        return skeletonGroup;
+    }
+
     createSkybox() {
         const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
         const skyMaterial = new THREE.MeshBasicMaterial({
@@ -259,6 +423,7 @@ class Vimlantis {
             side: THREE.BackSide,
         });
         const sky = new THREE.Mesh(skyGeometry, skyMaterial);
+        this.sky = sky; // Store reference
         this.scene.add(sky);
 
         // Add some clouds
@@ -290,7 +455,46 @@ class Vimlantis {
             cloudGroup.add(cloud);
         }
 
+        this.clouds = cloudGroup; // Store reference
         this.scene.add(cloudGroup);
+    }
+
+    createStars() {
+        const starGroup = new THREE.Group();
+        const starGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+        const starMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        for (let i = 0; i < 200; i++) {
+            const star = new THREE.Mesh(starGeometry, starMaterial.clone());
+
+            // Random position in the sky
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI / 2; // Only upper hemisphere
+            const radius = 300 + Math.random() * 150;
+
+            star.position.set(
+                radius * Math.sin(phi) * Math.cos(theta),
+                radius * Math.cos(phi),
+                radius * Math.sin(phi) * Math.sin(theta)
+            );
+
+            // Random size variation
+            const scale = 0.5 + Math.random() * 1.5;
+            star.scale.set(scale, scale, scale);
+
+            // Random brightness
+            star.material.opacity = 0.5 + Math.random() * 0.5;
+
+            starGroup.add(star);
+        }
+
+        this.stars = starGroup;
+        this.stars.visible = false; // Hidden by default
+        this.scene.add(starGroup);
     }
 
     populateScene() {
@@ -359,14 +563,30 @@ class Vimlantis {
             let mesh;
 
             if (item.type === 'directory') {
-                // Lighthouse for directories
-                mesh = this.createLighthouse();
+                if (this.themes[this.settings.oceanTheme]?.directoryModel === 'headstone') {
+                    mesh = this.createHeadstone();
+                } else {
+                    // Lighthouse for directories
+                    mesh = this.createLighthouse();
+                }
                 mesh.position.set(x, 0, z);
-                // Add slight random rotation for natural look
-                mesh.rotation.y = Math.random() * Math.PI * 2;
+
+                if (this.themes[this.settings.oceanTheme]?.directoryModel === 'headstone') {
+                    // Uniform orientation for headstones (facing camera/forward)
+                    mesh.rotation.y = 0;
+                    // Add tiny variation so it's not perfectly unnatural
+                    mesh.rotation.y += (Math.random() - 0.5) * 0.2;
+                } else {
+                    // Add slight random rotation for natural look
+                    mesh.rotation.y = Math.random() * Math.PI * 2;
+                }
             } else {
-                // Buoy for files
-                mesh = this.createBuoy();
+                if (this.themes[this.settings.oceanTheme]?.fileModel === 'ghost') {
+                    mesh = this.createGhost();
+                } else {
+                    // Buoy for files
+                    mesh = this.createBuoy();
+                }
                 mesh.position.set(x, 0, z);
                 // Add slight random rotation
                 mesh.rotation.y = Math.random() * Math.PI * 2;
@@ -380,7 +600,7 @@ class Vimlantis {
             labelDiv.className = 'object-label';
             labelDiv.textContent = item.name;
             const label = new THREE.CSS2DObject(labelDiv);
-            label.position.set(0, item.type === 'directory' ? 0 : 2, 0);
+            label.position.set(0, item.type === 'directory' ? 0 : 4, 0);
             mesh.add(label);
 
             this.objects.push({ mesh, item });
@@ -550,6 +770,93 @@ class Vimlantis {
         return group;
     }
 
+    createHeadstone() {
+        const group = new THREE.Group();
+
+        // Base
+        const baseGeo = new THREE.BoxGeometry(8, 1, 6);
+        const stoneMat = new THREE.MeshStandardMaterial({
+            color: 0x888888,
+            roughness: 0.9,
+            metalness: 0.1
+        });
+        const base = new THREE.Mesh(baseGeo, stoneMat);
+        base.castShadow = true;
+        base.receiveShadow = true;
+        group.add(base);
+
+        // Stone
+        const stoneGeo = new THREE.BoxGeometry(6, 8, 1.6);
+        const stone = new THREE.Mesh(stoneGeo, stoneMat);
+        stone.position.y = 4.5;
+        stone.castShadow = true;
+        stone.receiveShadow = true;
+        group.add(stone);
+
+        // Rounded top (cylinder)
+        const topGeo = new THREE.CylinderGeometry(3, 3, 1.6, 16);
+        const top = new THREE.Mesh(topGeo, stoneMat);
+        top.rotation.x = Math.PI / 2;
+        top.position.y = 8.5;
+        top.castShadow = true;
+        top.receiveShadow = true;
+        group.add(top);
+
+        // Dirt patch
+        const dirtGeo = new THREE.CircleGeometry(10, 16);
+        const dirtMat = new THREE.MeshStandardMaterial({ color: 0x3b2d24 });
+        const dirt = new THREE.Mesh(dirtGeo, dirtMat);
+        dirt.rotation.x = -Math.PI / 2;
+        dirt.position.y = 0.05;
+        dirt.receiveShadow = true;
+        group.add(dirt);
+
+        return group;
+    }
+
+    createGhost() {
+        const group = new THREE.Group();
+
+        // Ghost body (sphere + cylinder blended)
+        const ghostMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.7,
+            emissive: 0xaaaaaa,
+            emissiveIntensity: 0.2
+        });
+
+        const headGeo = new THREE.SphereGeometry(1, 16, 16);
+        const head = new THREE.Mesh(headGeo, ghostMat);
+        head.position.y = 3;
+        group.add(head);
+
+        const bodyGeo = new THREE.CylinderGeometry(1, 1.5, 2, 16, 1, true);
+        const body = new THREE.Mesh(bodyGeo, ghostMat);
+        body.position.y = 2;
+        group.add(body);
+
+        // Eyes
+        const eyeGeo = new THREE.SphereGeometry(0.15, 8, 8);
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+        const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+        leftEye.position.set(-0.3, 3.1, 0.85);
+        group.add(leftEye);
+
+        const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+        rightEye.position.set(0.3, 3.1, 0.85);
+        group.add(rightEye);
+
+        // Float animation helper
+        group.userData.floatOffset = Math.random() * Math.PI * 2;
+
+        // Scale ghost to 1.5x
+        group.scale.set(1.5, 1.5, 1.5);
+
+        return group;
+    }
+
     setupEventListeners() {
         // Keyboard
         window.addEventListener('keydown', (e) => {
@@ -641,10 +948,11 @@ class Vimlantis {
 
         if (oceanThemeSelect) {
             oceanThemeSelect.value = this.settings.oceanTheme;
-            this.updateOceanTheme();
+            this.updateTheme();
             oceanThemeSelect.addEventListener('change', (e) => {
                 this.settings.oceanTheme = e.target.value;
-                this.updateOceanTheme();
+                this.updateTheme();
+                this.populateScene(); // Re-populate to change assets
                 localStorage.setItem('vimlantisSettings', JSON.stringify(this.settings));
             });
         }
@@ -690,21 +998,75 @@ class Vimlantis {
         this.updateBreadcrumbs();
     }
 
-    updateOceanTheme() {
-        const themes = {
-            blue: 0x1a5f7a,
-            teal: 0x2a9d8f,
-            purple: 0x6a4c93,
-            sunset: 0xe76f51,
-        };
+    updateTheme() {
+        const theme = this.themes[this.settings.oceanTheme] || this.themes.pirate;
 
-        const target = themes[this.settings.oceanTheme] || themes.blue;
-
-        if (!this.ocean || !this.ocean.material || !this.ocean.material.color) {
-            return;
+        // Update ocean/ground visibility and appearance
+        if (theme.groundType === 'ground' || theme.groundType === 'space') {
+            // Hide ocean, show ground
+            if (this.ocean) {
+                this.ocean.visible = false;
+            }
+            if (this.ground) {
+                this.ground.visible = true;
+            }
+        } else {
+            // Show ocean, hide ground
+            if (this.ocean) {
+                this.ocean.visible = true;
+            }
+            if (this.ground) {
+                this.ground.visible = false;
+            }
         }
 
-        this.ocean.material.color.setHex(target);
+
+        // Hide boat in Ghost theme for first-person view
+        if (this.boat) {
+            if (theme.name === 'Ghost Cemetery') {
+                // Hide boat for first-person view
+                if (this.boat.children[0]) {
+                    this.boat.children[0].visible = false;
+                }
+                // Raise camera look-at point for better horizon view
+                this.cameraLookOffset.y = 2;
+            } else {
+                // Show boat in other themes
+                if (this.boat.children[0]) {
+                    this.boat.children[0].visible = true;
+                }
+                // Standard look-at point
+                this.cameraLookOffset.y = 0;
+            }
+        }
+
+
+        // Update Skybox if we had one that was color based, 
+        // but currently createSkybox makes a specific blue sphere.
+        // We can try to find the sky mesh and update it.
+        // In createSkybox: this.scene.add(sky);
+        // Update Skybox
+        if (this.sky && this.sky.material) {
+            this.sky.material.color.setHex(theme.skyColor);
+        }
+
+        // Update Clouds (hide for ghost/space if desired, or change color)
+        if (this.clouds) {
+            if (theme.name === 'Ghost Cemetery' || theme.name === 'Deep Space') {
+                this.clouds.visible = false;
+            } else {
+                this.clouds.visible = true;
+            }
+        }
+
+        // Update Stars (show for ghost/space)
+        if (this.stars) {
+            if (theme.name === 'Ghost Cemetery' || theme.name === 'Deep Space') {
+                this.stars.visible = true;
+            } else {
+                this.stars.visible = false;
+            }
+        }
     }
 
     updateBreadcrumbs() {
@@ -905,6 +1267,13 @@ class Vimlantis {
     }
 
     updateOceanWaves(time) {
+        const theme = this.themes[this.settings.oceanTheme] || this.themes.pirate;
+
+        // Don't animate if it's a ground theme
+        if (theme.groundType === 'ground' || theme.groundType === 'space') {
+            return;
+        }
+
         if (this.useShaders && this.oceanUniforms) {
             // Update shader uniforms for realistic water
             this.oceanUniforms.uTime.value = time;
